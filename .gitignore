@@ -1,0 +1,10 @@
+target
+.metadata
+.settings
+.classpath
+.project
+.idea/workspace.xml
+.idea/tasks.xml
+*.iml
+**/__pycache__
+*.pyc

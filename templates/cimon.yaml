@@ -1,0 +1,83 @@
+# the one and only configuration file for the SBB Cimon scripts
+#
+# poll jenkis and so on every pollingIntervalSec seconds and display result on output
+pollingIntervalSec: 60
+# operate on which days of the week, 0=monday and 6=sunday
+# input can be period like 0-4 (start and end inclusive) or list like 0,2,3 or a combination like 0-4,6 or * for all days
+# 0-4 is Monday to Friday, * or 0-6 is all days
+operatingDays: 0-4
+# similar to weekdays but the hours of the day
+# for instance 6-21 is 06:00 to 21:59 and * or 0-23 is allways
+operatingHours: 6-21
+# collectors - fetching the current status to display, for instance build status
+# each entry is an implementation module (python file without ".py") and has to be loadable
+collector:
+  # Collect from jenkins (build results). Usually you will need this one.
+  - implementation: jenkinscollector
+    # the base jenkins URL
+    url: <url-of-my-jenkins>
+    # username for jenkins, optional
+    #user: <myuser>
+    #passwordEncrypted: <AES encrypted password, base64 encoded - use configutil --encrypt <mypassword>>
+    #password: <plaintext-password, not recomended>
+    # url for the saml login using BasicAuthentication and then Set-Cookie and Cookie header
+    #samlLoginUrl: <mysamlloginurl>
+    # Validate HTTPS certificates - True per default
+    # validateCertificates: True
+    # a list of jobs [job_a,job_b]. For multiple jobs better use a view.
+    #jobs: []
+    # a list of views [view_a,view_b]. Ideally you have exactly one view here.
+    views: []
+    # maximum number of parallel requests to the jenkins server. Default is 7.
+    # maxParallelRequest: 7
+# collectors - fetching the current status to display, for instance build status
+output:
+  # Output to the USB Ampel. Usually no configuration required.
+  # remove if you dont use the Cleware USB Ampel.
+  # each entry is an implementation module (python file without ".py") and has to be loadable
+  - implementation: clewareampeloutput
+    # will find the device automatically, but for instance if you have multiple devices you can configure the device id here.
+    # use "lsusb" to find your device id
+    # device:
+    # the number of errors until error is signaled (all lights on). Default is 3 (the 4th error is displayed)
+    # signalErrorThreshold: 3
+  # Output to the Energenie Socket (Steckdosenleiste). Usually no configuration required.
+  # remove if you dont use Energenie.
+  - implementation: energenieoutput
+    # will find the device automatically, but for instance if you have multiple devices you can configure the number here.
+    # use "sispmctl -s" to find your device number
+    # deviceNr:
+    # the number of errors until error is signaled (all lights on). Default is 3 (the 4th error is displayed)
+    # signalErrorThreshold: 3
+
+# logging configuration, will be passed on to the python loggin dictionary config 1:1.
+# will log from INFO to a file in /var/log/cimon/cimon.log and from CRITICAL to stderr
+# See https://docs.python.org/2/library/logging.config.html for details
+logging:
+  version: 1
+  formatters:
+    simpleFormater:
+      format: '%(asctime)s %(levelname)s %(message)s'
+      datefmt: '%Y/%m/%d %H:%M:%S'
+  handlers:
+    console:
+      # log criticals to STDERR
+      class: logging.StreamHandler
+      formatter: simpleFormater
+      level: CRITICAL
+      stream: ext://sys.stderr
+    file:
+      # Template proposes a rotating file for 10 days, one month backup
+      class: logging.TimedRotatingFileHandler
+      formatter: simpleFormater
+      level: INFO
+      filename: /var/log/cimon/cimon.log
+      when: D
+      interval: 10
+      backupCount: 3
+  root:
+      level: DEBUG
+      handlers: [console, file]
+
+
+

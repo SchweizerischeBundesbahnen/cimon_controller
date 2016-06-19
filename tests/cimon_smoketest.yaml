@@ -1,0 +1,22 @@
+# the one and only configuration file for the SBB Cimon scripts
+pollingIntervalSec: 10
+collector:
+  - implementation: rotatingcollector
+output:
+  - implementation: consoleoutput
+
+logging:
+  version: 1
+  formatters:
+    simpleFormater:
+      format: '%(asctime)s %(levelname)s %(message)s'
+      datefmt: '%Y/%m/%d %H:%M:%S'
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: simpleFormater
+      level: DEBUG
+      stream: ext://sys.stderr
+  root:
+      level: DEBUG
+      handlers: [console]
