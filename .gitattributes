@@ -1,8 +1,3 @@
 #Auto detect text files and perform LF normalization
 * text=auto
 *.sh eol=lf
-*.rules eol=lf
-cimon eol=lf
-freesbb eol=lf
-interfaces eol=lf
-wpa_supplicant.conf eol=lf
