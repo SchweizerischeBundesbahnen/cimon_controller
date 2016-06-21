@@ -146,7 +146,7 @@ class JenkinsClient():
         self.http_client = http_client
 
     def latest_build(self, job_name):
-        return json.loads(self.http_client.open_and_read("%s/job/%s/lastBuild/api/json?depth=0" % (self.base_url, job_name)))
+        return json.loads(self.http_client.open_and_read("%s/job/%s/lastSuccessfulBuild/api/json?depth=0" % (self.base_url, job_name)))
 
     def view(self, view_name):
         return json.loads(self.http_client.open_and_read("%s/view/%s/api/json?depth=0" % (self.base_url, view_name)))

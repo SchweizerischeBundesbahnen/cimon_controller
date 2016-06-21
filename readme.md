@@ -1,5 +1,5 @@
 # Cimon controller
-Copyright (c) SBB 2016, Apache Licence 2.0. Author: Florian Seidl (Github: florianseidl) 
+Copyright (C) Schweizerische Bundesbahnen SBB 2016, Apache Licence 2.0. Author: Florian Seidl (Github: florianseidl) 
 
 Cimon implements a simple build momitor using a Raspberry Pi, a simple USB traffic light and an USB switchable socket. 
 
@@ -7,7 +7,7 @@ The cimon controller is a set of scripts written in python. It queries jenkins (
 
 The scripts are written in Python 3.4.
 
-The setup of the device, start/stop scripts, autoupdate and so on are available within the cimon_setup repository.
+The setup of the device, start/stop scripts, autoupdate and so on are available within the https://github.com/SchweizerischeBundesbahnen/cimon_controller repository.
 
 ## Prerequisites
 - Python 3.4
