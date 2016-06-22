@@ -99,7 +99,7 @@ class HttpClient:
             request = Request(request_url)
             logging.debug("Request to %s" % request_url)
             self.authentication_handler.add_header(request)
-            logging.debug("Request headers: %s" % request.headers)
+            logging.debug("Request headers: %.120s..." % request.headers)
             return self.__open__(request)
         except HTTPError as e:
             if e.code in (401,402,403,407,408) and retry < self.max_retries and self.authentication_handler.handle_forbidden(e): # maybe authentication issue
