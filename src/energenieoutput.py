@@ -1,6 +1,6 @@
 # Copyright (C) Schweizerische Bundesbahnen SBB, 2016
 # Python 3.4
-__author__ = 'u206123'
+__author__ = 'florianseidl'
 
 from output import AbstractBuildAmpel, default_signal_error_threshold
 from os import system

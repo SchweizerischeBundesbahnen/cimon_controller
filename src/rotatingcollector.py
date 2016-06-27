@@ -1,4 +1,4 @@
-__author__ = 'u206123'
+__author__ = 'florianseidl'
 
 # for manual test purposes only, cycle through predefined output values
 

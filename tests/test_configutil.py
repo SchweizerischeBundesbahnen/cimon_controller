@@ -1,6 +1,6 @@
-__author__ = 'u206123'
+__author__ = 'florianseidl'
 
-__author__ = 'u206123'
+__author__ = 'florianseidl'
 
 import env
 from configutil import *

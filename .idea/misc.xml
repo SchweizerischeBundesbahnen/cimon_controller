@@ -10,13 +10,6 @@
     <option name="pathToConfigFileJava" value="$PROJECT_DIR$/../../../settings/eclipse-code-formatter/eclipse-sbb-formatter.xml" />
     <option name="selectedJavaProfile" value="sbb_formatter_profile" />
   </component>
-  <component name="MavenImportPreferences">
-    <option name="generalSettings">
-      <MavenGeneralSettings>
-        <option name="mavenHome" value="D:\devsbb\apps\mvn\apache-maven-3.0.4" />
-      </MavenGeneralSettings>
-    </option>
-  </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
     <OptionsSetting value="true" id="Remove" />

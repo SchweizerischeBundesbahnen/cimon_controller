@@ -1,6 +1,6 @@
 # Copyright (C) Schweizerische Bundesbahnen SBB, 2016
 # Python 3.4
-__author__ = 'u206123'
+__author__ = 'florianseidl'
 
 from urllib.request import urlopen, HTTPError, Request, URLError
 from datetime import datetime

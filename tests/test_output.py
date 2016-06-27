@@ -1,4 +1,4 @@
-__author__ = 'u206123'
+__author__ = 'florianseidl'
 
 import env
 from output import *
