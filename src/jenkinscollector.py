@@ -75,6 +75,7 @@ class JenkinsCollector:
                 builds[job_name] = self.__convert_build__(jenkins_build)
             else:
                 builds[job_name] = {"request_status" : req_status}
+        logging.debug("Build status from builds: %s", builds)
         return builds
 
     def __latest_build__(self, job_name):
