@@ -119,7 +119,7 @@ class JenkinsCollector:
             if view:
                 builds.update(self.__extract_job__status__(view))
             else:
-                builds.update({"all" : {"request_result" : "error"}})
+                builds.update({"all" : {"request_status" : "error"}})
         logging.debug("Build status from views: %s", builds)
         return builds
 

@@ -152,5 +152,10 @@ class TestJenkinsCollector(TestCase):
         status = col.collect()
         self.assertEquals(len(status), 11)
 
+    def test_build_request_status_http_error(self):
+        status = self.do_collect_views(1, "foo", HTTPError("", 500, "kaputt", None, None))
+        print(status)
+        self.assertEqual(status["all"]["request_status"], "error")
+
 if __name__ == '__main__':
     main()

@@ -37,7 +37,7 @@ class ClewareAmpel():
 
     def __call_clewarecontrol__(self, light, on):
         device_str = "-d %s" % self.__device if self.__device else ""
-        command = "clewarecontrol %s -c 1 -as %s %s" % (device_str, light, int(on))
+        command = "clewarecontrol -b %s -c 1 -as %s %s" % (device_str, light, int(on))
         logging.debug(command)
         rc = system(command)
         if rc != 0:

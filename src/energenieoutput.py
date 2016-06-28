@@ -44,7 +44,7 @@ class Energenie():
 
     def __call_sispmctl__(self, light, on):
         device_str = "-d %s" % self.__device_nr if self.__device_nr else ""
-        command = "sispmctl %s %s %s" % (device_str, "-o" if on else "-f", light)
+        command = "sispmctl -q %s %s %s" % (device_str, "-o" if on else "-f", light)
         logging.debug(command)
         rc = system(command)
         if rc != 0:

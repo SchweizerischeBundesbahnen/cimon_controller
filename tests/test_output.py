@@ -95,6 +95,11 @@ class AbstractBuildAmpelTest(TestCase):
         else:
             ampel.signal.assert_called_once_with(red=False, yellow=False, green=True)
 
+    def test_error_with_all(self):
+        ampel = self.__create_ampel__(0)
+        ampel.on_update({'build': {'all': {'request_status': 'error'}}})
+        ampel.signal.assert_called_once_with(red=True, yellow=True, green=True)
+
     def __create_ampel__(self,signal_error_threshold):
         ampel = AbstractBuildAmpel(signal_error_threshold=signal_error_threshold)
         ampel.signal = Mock(spec=(""))
