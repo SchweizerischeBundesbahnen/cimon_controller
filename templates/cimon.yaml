@@ -22,7 +22,7 @@ collector:
     #password: <plaintext-password, not recomended>
     # url for the saml login using BasicAuthentication and then Set-Cookie and Cookie header
     #samlLoginUrl: <mysamlloginurl>
-    # Validate HTTPS certificates - True per default
+    # Validate HTTPS certificates - True per default (False only works with python >= 3.4.3)
     # validateCertificates: True
     # a list of jobs [job_a,job_b]. For multiple jobs better use a view.
     #jobs: []

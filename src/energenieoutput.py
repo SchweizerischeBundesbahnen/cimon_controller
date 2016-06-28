@@ -38,9 +38,9 @@ class Energenie():
 
     def switch(self, socket_1=False, socket_2=False, socket_3=False, socket_4=False):
         self.__call_sispmctl__(1, socket_1)
-        self.__call_sispmctl__(4, socket_2)
-        self.__call_sispmctl__(2, socket_3)
-        self.__call_sispmctl__(3, socket_4)
+        self.__call_sispmctl__(2, socket_2)
+        self.__call_sispmctl__(3, socket_3)
+        self.__call_sispmctl__(4, socket_4)
 
     def __call_sispmctl__(self, light, on):
         device_str = "-d %s" % self.__device_nr if self.__device_nr else ""
