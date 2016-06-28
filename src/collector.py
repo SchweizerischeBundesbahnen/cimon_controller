@@ -7,6 +7,7 @@ from urllib.request import urlopen, HTTPError, Request
 from time import sleep
 import logging
 import ssl
+import sys
 
 def create_http_client(username = None, password = None, saml_login_url=None, verify_ssl=True):
     if saml_login_url:
@@ -84,11 +85,19 @@ class HttpClient:
         self.authentication_handler = authentication_handler
         self.max_retries = max_retries
         self.retry_delay_sec = retry_delay_sec
-        ctx = ssl.create_default_context()
+        # the feature urlopen with ssl context is only supported from python 3.4.3 onwards
         if not verify_ssl:
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-        self.ctx = ctx
+            if sys.version_info >= (3,4,3):
+                ctx = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                self.ctx = ctx
+            else:
+                logging.warning("Disabling verify ssl is not supported in python version below 3.4.3. Ignoring configuration, ssl verfication is enabled")
+                self.ctx = None
+        else:
+            # verification activated, default will be fine
+            self.ctx = None
 
     def open_and_read(self, request_url):
         response = self.open(request_url)
@@ -115,4 +124,7 @@ class HttpClient:
                 raise e
 
     def __open__(self, request):
-        return urlopen(request, context=self.ctx)
+        if self.ctx:
+            return urlopen(request, context=self.ctx)
+        else:
+            return urlopen(request)
