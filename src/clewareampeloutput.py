@@ -8,7 +8,7 @@ from threading import Thread, Condition
 from datetime import datetime, timedelta
 import logging
 
-default_flash_interval=1
+default_flash_interval_sec=1
 
 # controll the cleware usb ampel (http://www.cleware-shop.de/epages/63698188.sf/de_DE/?ObjectPath=/Shops/63698188/Products/43/SubProducts/43-1)
 # uses the shell cleware tool (as user) as no python binding worked. Unfortunately this is kind of slow.
@@ -16,15 +16,15 @@ default_flash_interval=1
 def create(configuration, key=None):
     return ClewareBuildAmpel(device=configuration.get("device", None),
                              signal_error_threshold=configuration.get("signalErrorThreshold", default_signal_error_threshold),
-                             flash_interval=configuration.get("flash_interval", default_flash_interval))
+                             flash_interval_sec=configuration.get("flashIntervalSec", default_flash_interval_sec))
 
 
 class ClewareBuildAmpel(AbstractBuildAmpel):
 
     """control the cleware ampel according to build status"""
-    def __init__(self, device=None, signal_error_threshold=default_signal_error_threshold, flash_interval=default_flash_interval):
+    def __init__(self, device=None, signal_error_threshold=default_signal_error_threshold, flash_interval_sec=default_flash_interval_sec):
         super().__init__(signal_error_threshold=signal_error_threshold)
-        self.cleware_ampel=ClewareAmpel(device=device, flash_interval=flash_interval)
+        self.cleware_ampel=ClewareAmpel(device=device, flash_interval_sec=flash_interval_sec)
 
     def signal(self, red, yellow, green, flash=False):
         self.cleware_ampel.display(red=red, yellow=yellow, green=green, flash=flash)
@@ -36,9 +36,9 @@ class ClewareBuildAmpel(AbstractBuildAmpel):
 class ClewareAmpel():
     """control the cleware ampel using the clewarecontrol shell command """
 
-    def __init__(self, device=None, flash_interval=default_flash_interval):
+    def __init__(self, device=None, flash_interval_sec=default_flash_interval_sec):
         self.__device=device
-        self.__flash_interval = flash_interval
+        self.__flash_interval_sec = flash_interval_sec
         self.red = self.green = self.yellow = self.flash = False
         self.__stopped = True
         self.condition = Condition() # condition has its own (r)lock
@@ -96,7 +96,7 @@ class ClewareAmpel():
             logging.debug("Flash on: %s", str(locals().copy().pop("self")))
             self.__output_to_cleware__(red=self.red, yellow=self.yellow, green=self.green)
         self.updated = False
-        return datetime.now() + timedelta(seconds=self.__flash_interval), not flash_state
+        return datetime.now() + timedelta(seconds=self.__flash_interval_sec / 2), not flash_state
 
     def __output_to_cleware__(self, red, yellow, green):
         self.__call_clewarecontrol__(0, red)

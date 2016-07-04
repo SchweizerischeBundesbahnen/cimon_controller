@@ -60,7 +60,7 @@ class TestClewareAmpel(TestCase):
                                                            call(red=True, yellow=False, green=False)])
 
     def create_cleware_ampel(self):
-        ampel = ClewareAmpel(flash_interval=0.1)
+        ampel = ClewareAmpel(flash_interval=0.2)
         ampel.__output_to_cleware__ = MagicMock(spec=(""))
         return ampel
 
