@@ -8,11 +8,14 @@ def create(configuration, key=None):
 class RotatingBuildCollector():
     type = "build"
 
-    status = ({"request_status" : "ok", "result" : "failure"},
-              {"request_status" : "ok", "result" : "unstable"},
-              {"request_status" : "ok", "result" : "success"},
-              {"request_status" : "ok", "result" : "other"},
-              {"request_status" : "ok", "result" : "success"},
+    status = ({"request_status" : "ok", "result" : "failure", "building" : False },
+              {"request_status" : "ok", "result" : None, "building" : True },
+              {"request_status" : "ok", "result" : "unstable", "building" : False },
+              {"request_status" : "ok", "result" : None, "building" : True },
+              {"request_status" : "ok", "result" : "success", "building" : False },
+              {"request_status" : "ok", "result" : None, "building" : True },
+              {"request_status" : "ok", "result" : "other", "building" : False },
+              {"request_status" : "ok", "result" : None, "building" : True },
               {"request_status" : "error"}, # igonred (if show_error_threshold is 3)
               {"request_status" : "error"}, # igonred (if show_error_threshold is 3)
               {"request_status" : "error"}, # igonred (if show_error_threshold is 3)

@@ -76,10 +76,36 @@ class AbstractBuildAmpelTest(TestCase):
     def test_error_threshold_0_0(self):
         self.__do_test_error__(0, 0, False)
 
-    def __do_test__(self, status, red, yellow, green):
+    def test_is_buiding_success(self):
+        self.__do_test__({"build" : {"job.a" :{"request_status" : "ok", "result" : "success", "building" : True}}}, red=False, yellow=False, green=True, flash=True)
+
+    def test_is_not_buiding_success(self):
+        self.__do_test__({"build" : {"job.a" :{"request_status" : "ok", "result" : "success", "building" : False}}}, red=False, yellow=False, green=True, flash=False)
+
+    def test_is_buiding_failure(self):
+        self.__do_test__({"build" : {"job.a" :{"request_status" : "ok", "result" : "failure", "building" : True}}}, red=True, yellow=False, green=False, flash=True)
+
+    def test_is_buiding_unstable(self):
+        self.__do_test__({"build" : {"job.a" :{"request_status" : "ok", "result" : "unstable", "building" : True}}}, red=False, yellow=True, green=False, flash=True)
+
+    def test_is_buiding_other(self):
+        self.__do_test__({"build" : {"job.a" :{"request_status" : "ok", "result" : "other", "building" : True}}}, red=False, yellow=True, green=False, flash=True)
+
+    def test_is_buiding_error(self):
+        self.__do_test__({"build" :
+                              { "job.a" :{"request_status" : "error", },
+                                "job.b" :{"request_status" : "ok", "result" : "other", "building" : False}}},
+                         red=True, yellow=True, green=True, flash=False)
+
+    def test_error_with_all(self):
+        ampel = self.__create_ampel__(0)
+        ampel.on_update({'build': {'all': {'request_status': 'error'}}})
+        ampel.signal.assert_called_once_with(red=True, yellow=True, green=True, flash=False)
+
+    def __do_test__(self, status, red, yellow, green, flash=False):
         ampel = self.__create_ampel__(signal_error_threshold=3) # threshold is pointless here as no previosu status exists
         ampel.on_update(status)
-        ampel.signal.assert_called_once_with(red=red, yellow=yellow, green=green)
+        ampel.signal.assert_called_once_with(red=red, yellow=yellow, green=green, flash=flash)
 
     def __do_test_error__(self, nr_errors, signal_error_threshold, expect_error_signal):
         ampel = self.__create_ampel__(signal_error_threshold)
@@ -87,18 +113,13 @@ class AbstractBuildAmpelTest(TestCase):
         ampel.on_update({"build" : {"job.a" :{"request_status" : "ok", "result" : "success"}}})
         status = {"build" : {"job.a" :{"request_status" : "error"}}}
         for i in range(nr_errors):
-            ampel.signal.assert_called_once_with(red=False, yellow=False, green=True)
+            ampel.signal.assert_called_once_with(red=False, yellow=False, green=True, flash=False)
             ampel.signal.reset_mock()
             ampel.on_update(status)
         if expect_error_signal:
-            ampel.signal.assert_called_once_with(red=True, yellow=True, green=True)
+            ampel.signal.assert_called_once_with(red=True, yellow=True, green=True, flash=False)
         else:
-            ampel.signal.assert_called_once_with(red=False, yellow=False, green=True)
-
-    def test_error_with_all(self):
-        ampel = self.__create_ampel__(0)
-        ampel.on_update({'build': {'all': {'request_status': 'error'}}})
-        ampel.signal.assert_called_once_with(red=True, yellow=True, green=True)
+            ampel.signal.assert_called_once_with(red=False, yellow=False, green=True, flash=False)
 
     def __create_ampel__(self,signal_error_threshold):
         ampel = AbstractBuildAmpel(signal_error_threshold=signal_error_threshold)

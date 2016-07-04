@@ -2,6 +2,7 @@ __author__ = 'florianseidl'
 
 import sys
 import os
+import logging
 
 # append module root directory to sys.path
 sys.path.append(
@@ -13,3 +14,5 @@ sys.path.append(
         )
     , "src")
 )
+
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)

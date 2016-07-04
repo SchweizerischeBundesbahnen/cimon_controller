@@ -45,12 +45,6 @@ class TestHttpClient(TestCase):
             h.open_and_read("http://irgendw.as")
         self.assertEqual(h.__open__.call_count, 1)
 
-    def test_http_exception_401_no_retry(self):
-        h = self.create_http_client(http_error_codes=[401]*99)
-        with self.assertRaises(HTTPError):
-            h.open_and_read("http://irgendw.as")
-        self.assertEqual(h.__open__.call_count, 1)
-
     def test_basic_auth(self):
         h = self.create_http_client(authentication_handler=BasicAuthenticationHandler("bla", "blo"))
         h.open_and_read("http://irgendw.as")

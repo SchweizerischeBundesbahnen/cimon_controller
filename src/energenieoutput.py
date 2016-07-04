@@ -27,7 +27,7 @@ class EnergenieBuildAmpel(AbstractBuildAmpel):
         super(EnergenieBuildAmpel, self).__init__(signal_error_threshold=signal_error_threshold)
         self.energenie = Energenie(device_nr)
 
-    def signal(self, red, yellow, green):
+    def signal(self, red, yellow, green, flash=False): # igonre flash, this feature is not supported
         self.energenie.switch(socket_1=red, socket_2=yellow, socket_3=green, socket_4=red)
 
 class Energenie():

@@ -45,7 +45,11 @@ def create(configuration, key=None):
 class JenkinsCollector:
     type = "build"
 
-    colors_to_result = {"red" : "failure", "yellow" : "unstable", "blue" : "success", "disabled" : "other"}
+    # extract result and building state from the colors in the view
+    colors_to_result = {"red" : "failure",
+                        "yellow" : "unstable",
+                        "blue" : "success",
+                        "disabled" : "other"}
 
     def __init__(self, base_url, username = None, password = None, job_names =(), view_names = (), max_parallel_requests=default_max_parallel_requests, saml_login_url=None, verify_ssl=True):
         self.jenkins = JenkinsClient(base_url=base_url,
@@ -57,6 +61,7 @@ class JenkinsCollector:
         self.job_names = tuple(job_names)
         self.view_names = tuple(view_names)
         self.max_parallel_requests = max_parallel_requests
+        self.last_results={}
 
     def collect(self):
         builds=self.collect_views();
@@ -72,7 +77,7 @@ class JenkinsCollector:
         for future_request in futures.as_completed(future_requests):
             job_name, req_status, jenkins_build = future_request.result()
             if req_status == "ok":
-                builds[job_name] = self.__convert_build__(jenkins_build)
+                builds[job_name] = self.__convert_build__(job_name, jenkins_build)
             else:
                 builds[job_name] = {"request_status" : req_status}
         logging.debug("Build status from builds: %s", builds)
@@ -94,20 +99,22 @@ class JenkinsCollector:
             return (job_name, "error", None)
 
 
-    def __convert_build__(self, jenkins_build_result):
+    def __convert_build__(self, job_name, jenkins_build_result):
         build = {"request_status" : "ok"}
         build["building"] = jenkins_build_result["building"]
-        build["result"] = self.__convert_build_result__(jenkins_build_result["result"])
+        build["result"] = self.__convert_store_fill_job_result__(job_name, jenkins_build_result["result"])
         build["number"] = jenkins_build_result["number"]
         build["timestamp"] = datetime.fromtimestamp(jenkins_build_result["timestamp"]/1000.0)
         logging.debug("Converted Build result", build)
         return build
 
-    def __convert_build_result__(self, jenkins_result):
-        if jenkins_result in ("SUCCESS", "UNSTABLE", "FAILURE"):
-            return jenkins_result.lower()
+    def __convert_store_fill_job_result__(self, job_name, jenkins_result):
+        if jenkins_result:
+            result = jenkins_result.lower() if jenkins_result in ("SUCCESS", "UNSTABLE", "FAILURE") else "other" # ABORTED or NOT_BUILT
+            self.last_results[job_name] = result
+            return result
         else:
-            return "other" # ABORTED or NOT_BUILT
+            return self.last_results[job_name] if job_name in self.last_results else "other"
 
     def collect_views(self):
         with futures.ThreadPoolExecutor(max_workers=self.max_parallel_requests) as executor:
@@ -126,8 +133,16 @@ class JenkinsCollector:
     def __extract_job__status__(self, view):
         builds = {}
         for job in view["jobs"]:
-            if "color" in job and job["color"] in self.colors_to_result:
-                builds[job["name"]] = {"request_status" : "ok", "result" : self.colors_to_result[job["color"]]}
+            if "color" in job:
+                color_status_building = job["color"].split("_") if job["color"] else (None,)
+                if color_status_building[0] in self.colors_to_result:
+                    builds[job["name"]] = {"request_status" : "ok",
+                                           "result" : self.colors_to_result[color_status_building[0]],
+                                           "building" : len(color_status_building) > 1 and color_status_building[1] == "anime"}
+                else:
+                    builds[job["name"]] = {"request_status" : "ok",
+                                           "result" : "other",
+                                           "building" : False }
             else:
                 builds[job["name"]] = {"request_status" : "not_found"}
         return builds

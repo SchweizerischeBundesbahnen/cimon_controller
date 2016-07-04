@@ -9,9 +9,9 @@ def create(configuration, key=None):
 class ConsoleOutput(AbstractBuildAmpel):
     """Mock for manual testing"""
 
-    def signal(self, red, yellow, green):
+    def signal(self, red, yellow, green, flash=False):
         if red or yellow or green:
-            signal = "signaling%s%s%s" % (" red" if red else "", " yellow" if yellow else "", " green" if green else "")
+            signal = "signaling%s%s%s%s" % (" red" if red else "", " yellow" if yellow else "", " green" if green else "", " flashing" if flash else "")
         else:
             signal = "signaling off"
         print(signal)

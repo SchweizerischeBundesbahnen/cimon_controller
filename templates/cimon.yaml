@@ -18,6 +18,7 @@ collector:
     url: <url-of-my-jenkins>
     # username for jenkins, optional
     #user: <myuser>
+    # encrypted password requires the correct AES Key at ~/cimon/key.bin
     #passwordEncrypted: <AES encrypted password, base64 encoded - use configutil --encrypt <mypassword>>
     #password: <plaintext-password, not recomended>
     # url for the saml login using BasicAuthentication and then Set-Cookie and Cookie header
