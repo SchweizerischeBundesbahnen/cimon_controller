@@ -30,7 +30,7 @@ class ClewareBuildAmpel(AbstractBuildAmpel):
         self.cleware_ampel.display(red=red, yellow=yellow, green=green, flash=flash)
 
     def reset(self):
-        super.reset()
+        super().reset()
         self.cleware_ampel.stop()
 
 class ClewareAmpel():
