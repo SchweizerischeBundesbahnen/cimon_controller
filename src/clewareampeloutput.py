@@ -42,7 +42,6 @@ class ClewareAmpel():
         self.red = self.green = self.yellow = self.flash = False
         self.__stopped = True
         self.condition = Condition() # condition has its own (r)lock
-        self.output_thread = Thread(target=self.output_loop)
         self.udpated = False
 
     def stop(self):
@@ -61,7 +60,7 @@ class ClewareAmpel():
             # start the output thread if required...
             if self.__stopped:
                 self.__stopped = False
-                self.output_thread.start()
+                Thread(target=self.output_loop).start()
             self.condition.notify_all()
 
     def output_loop(self):
@@ -79,8 +78,7 @@ class ClewareAmpel():
                     timeout = (wait_until - datetime.now()).total_seconds() if wait_until else None
                     logging.debug("Waiting with timeout %ss", str(timeout))
                     self.condition.wait(timeout=timeout)
-                    logging.debug("Wait over")
-            logging.info("Cleaarecontrol Output Thread stopped.")
+            logging.info("Cleawareampel Output Thread stopped.")
 
     def __do_output_no_flash__(self):
         logging.debug("Switch on: %s", str(locals().copy().pop("self")))
