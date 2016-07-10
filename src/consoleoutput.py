@@ -2,6 +2,7 @@
 # Python 3.4
 __author__ = 'florianseidl'
 from output import AbstractBuildAmpel
+from datetime import datetime
 
 def create(configuration, key=None):
     return ConsoleOutput()
@@ -11,9 +12,9 @@ class ConsoleOutput(AbstractBuildAmpel):
 
     def signal(self, red, yellow, green, flash=False):
         if red or yellow or green:
-            signal = "signaling%s%s%s%s" % (" red" if red else "", " yellow" if yellow else "", " green" if green else "", " flashing" if flash else "")
+            signal = "%s signaling%s%s%s%s" % (datetime.now().isoformat(), " red" if red else "", " yellow" if yellow else "", " green" if green else "", " flashing" if flash else "")
         else:
-            signal = "signaling off"
+            signal = "%s signaling off" % datetime.now().isoformat()
         print(signal)
 
 if  __name__ =='__main__':

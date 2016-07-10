@@ -15,7 +15,7 @@ import logging
 #   3: green
 #   4: red (second red for instance for a rotating light)
 # both red will be switched together
-def create(configuration, key=None):
+def create(configuration, aesKey=None):
     return EnergenieBuildAmpel(device_nr=configuration.get("deviceNr", None),
                                signal_error_threshold=configuration.get("signalErrorThreshold", default_signal_error_threshold))
 
@@ -37,14 +37,14 @@ class Energenie():
         self.__device_nr=device_nr
 
     def switch(self, socket_1=False, socket_2=False, socket_3=False, socket_4=False):
-        self.__call_sispmctl__(1, socket_1)
-        self.__call_sispmctl__(2, socket_2)
-        self.__call_sispmctl__(3, socket_3)
-        self.__call_sispmctl__(4, socket_4)
+        self.__call_sispmctl__((1, socket_1), (2, socket_2), (3, socket_3), (4, socket_4))
 
-    def __call_sispmctl__(self, light, on):
+    def __call_sispmctl__(self, *socket_on):
         device_str = "-d %s" % self.__device_nr if self.__device_nr else ""
-        command = "sispmctl -q %s %s %s" % (device_str, "-o" if on else "-f", light)
+        switches = ""
+        for socket, on in socket_on:
+           switches += " %s %s" % ("-o" if on else "-f", socket)
+        command = "sispmctl -q %s%s" % (device_str, switches)
         logging.debug(command)
         rc = system(command)
         if rc != 0:

@@ -9,13 +9,13 @@ class RotatingBuildCollector():
     type = "build"
 
     status = ({"request_status" : "ok", "result" : "failure", "building" : False },
-              {"request_status" : "ok", "result" : None, "building" : True },
+              {"request_status" : "ok", "result" : "failure", "building" : True },
               {"request_status" : "ok", "result" : "unstable", "building" : False },
-              {"request_status" : "ok", "result" : None, "building" : True },
+              {"request_status" : "ok", "result" : "unstable", "building" : True },
               {"request_status" : "ok", "result" : "success", "building" : False },
-              {"request_status" : "ok", "result" : None, "building" : True },
+              {"request_status" : "ok", "result" : "success", "building" : True },
               {"request_status" : "ok", "result" : "other", "building" : False },
-              {"request_status" : "ok", "result" : None, "building" : True },
+              {"request_status" : "ok", "result" : "other", "building" : True },
               {"request_status" : "error"}, # igonred (if show_error_threshold is 3)
               {"request_status" : "error"}, # igonred (if show_error_threshold is 3)
               {"request_status" : "error"}, # igonred (if show_error_threshold is 3)

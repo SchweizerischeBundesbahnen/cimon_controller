@@ -6,8 +6,8 @@ from urllib.request import HTTPError, URLError
 from unittest import TestCase, main
 from unittest.mock import MagicMock, Mock, DEFAULT
 from types import SimpleNamespace
-import os
-from datetime import datetime
+from concurrent import futures
+
 
 
 class TestHttpClient(TestCase):
@@ -47,7 +47,7 @@ class TestHttpClient(TestCase):
 
     def test_basic_auth(self):
         h = self.create_http_client(authentication_handler=BasicAuthenticationHandler("bla", "blo"))
-        h.open_and_read("http://irgendw.as")
+        h.open_and_read()
         self.assertEqual(h.__open__.call_count, 1)
         request = self.__get_request__(h.__open__)
         self.assertTrue(request.has_header("Authorization"))
@@ -73,6 +73,20 @@ class TestHttpClient(TestCase):
         request = self.__get_request__(h.__open__)
         self.assertEquals(request.get_header("Cookie"), "bla")
 
+    def test_saml_mulitthreading(self):
+        saml = SamlAuthenticationHandler("irgendwer", "geheim", "http://log.in")
+        saml.login_http_client = self.create_http_client(cookie_header="bla")
+        h = self.create_http_client(http_error_codes=[401] + [None]*43, response_str="hallo", authentication_handler=saml)
+        with futures.ThreadPoolExecutor(max_workers=42) as executor:
+            future_requests = ({executor.submit(h.open_and_read, "http://irgendwas"):
+                               i for i in range(0,42)})
+        futures.wait(future_requests)
+        self.assertEqual(h.__open__.call_count, 43)
+        self.assertEqual(saml.login_http_client.__open__.call_count, 1)
+        request = self.__get_request__(h.__open__)
+        self.assertEquals(request.get_header("Cookie"), "bla")
+
+
     def test_saml_http_exception_401_saml_no_cookie_sent(self):
         saml = SamlAuthenticationHandler("irgendwer", "geheim", "http://log.in")
         saml.login_http_client = self.create_http_client()
@@ -83,7 +97,9 @@ class TestHttpClient(TestCase):
         self.assertEqual(saml.login_http_client.__open__.call_count, 3)
 
     def create_http_client(self, response_str="", http_error_codes=None, authentication_handler=EmptyAuthenticationHandler(), cookie_header=None):
-        h = HttpClient(authentication_handler, retry_delay_sec=0)
+        h = HttpClient(base_url="http://irgendw.as",
+                       authentication_handler= authentication_handler,
+                       retry_delay_sec=0)
         response = SimpleNamespace()
         response.readall = Mock(spec=(""), return_value=response_str.encode("UTF-8"))
         response.headers = SimpleNamespace()

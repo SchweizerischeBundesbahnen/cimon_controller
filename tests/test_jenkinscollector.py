@@ -13,15 +13,15 @@ class TestJenkinsClient(TestCase):
     json_str = '{ "foo": "bar" }'
 
     def test_json_decode(self):
-        c = JenkinsClient("http://foo.bar", HttpClient())
+        c = JenkinsClient(HttpClient("http://foo.bar"))
         c.http_client.open_and_read = MagicMock(spec=(""), return_value=self.json_str)
         res = c.latest_build("myjob")
         self.assertEquals(res, {"foo" : "bar"})
-        c.http_client.open_and_read.assert_called_with("http://foo.bar/job/myjob/lastBuild/api/json?depth=0")
+        c.http_client.open_and_read.assert_called_with("/job/myjob/lastBuild/api/json?depth=0")
 
 
     def test_http_exception_500(self):
-        c = JenkinsClient("http://foo.bar", HttpClient())
+        c = JenkinsClient(HttpClient("http://foo.bar"))
         c.http_client.open_and_read = Mock(spec=(""), return_value=self.json_str)
         c.http_client.open_and_read.side_effect = HTTPError("http://foo.bar", 500, None, None, None)
         with self.assertRaises(HTTPError):
@@ -143,11 +143,15 @@ class TestJenkinsCollector(TestCase):
 
     def test_collect_jobs_and_views(self):
         col = JenkinsCollector(self.url, job_names= (self.job_name_success, self.job_name_failed), view_names=(self.view_name_2, ))
-        col.jenkins.http_client.open_and_read = Mock(spec=(""), side_effect=[self.read(self.view_name_2.replace("/", "__")),
-                                                                    self.read(self.job_name_success),
-                                                                    self.read(self.job_name_failed)])
+        content_by_key = {
+                            self.job_name_success : self.read(self.job_name_success),
+                            self.job_name_failed : self.read(self.job_name_failed),
+                            self.view_name_2 : self.read(self.view_name_2.replace("/", "__"))
+        }
+        col.jenkins.http_client.open_and_read = Mock(spec=(""), side_effect=lambda x : [content_by_key[k] for k in content_by_key if k in x][0])
         status = col.collect()
         self.assertEquals(11, len(status))
+
 
     def test_build_request_status_http_error(self):
         status = self.do_collect_views(1, "foo", HTTPError("", 500, "kaputt", None, None))

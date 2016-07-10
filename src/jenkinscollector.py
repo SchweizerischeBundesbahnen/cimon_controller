@@ -52,8 +52,8 @@ class JenkinsCollector:
                         "disabled" : "other"}
 
     def __init__(self, base_url, username = None, password = None, job_names =(), view_names = (), max_parallel_requests=default_max_parallel_requests, saml_login_url=None, verify_ssl=True):
-        self.jenkins = JenkinsClient(base_url=base_url,
-                                     http_client=create_http_client(username=username,
+        self.jenkins = JenkinsClient(http_client=create_http_client(base_url=base_url,
+                                                                    username=username,
                                                                     password=password,
                                                                     saml_login_url=saml_login_url,
                                                                     verify_ssl=verify_ssl))
@@ -64,24 +64,26 @@ class JenkinsCollector:
         self.last_results={}
 
     def collect(self):
-        builds=self.collect_views();
-        builds.update(self.collect_jobs())
-        return builds
+        method_param = [(self.collect_job, job_name) for job_name in self.job_names] + \
+                       [(self.collect_view, view_name) for view_name in self.view_names]
 
-    def collect_jobs(self):
         with futures.ThreadPoolExecutor(max_workers=self.max_parallel_requests) as executor:
-            future_requests = ({executor.submit(self.__latest_build__, job_name):
-                                (job_name) for job_name in self.job_names})
+            future_requests = ({executor.submit(method, param):
+                                    (method, param) for method, param in method_param})
 
         builds = {}
         for future_request in futures.as_completed(future_requests):
-            job_name, req_status, jenkins_build = future_request.result()
-            if req_status == "ok":
-                builds[job_name] = self.__convert_build__(job_name, jenkins_build)
-            else:
-                builds[job_name] = {"request_status" : req_status}
-        logging.debug("Build status from builds: %s", builds)
+            builds.update(future_request.result())
+
+        logging.debug("Build status collected: %s", builds)
         return builds
+
+    def collect_job(self, job_name):
+        job_name, req_status, jenkins_build = self.__latest_build__(job_name)
+        if req_status == "ok":
+            return { job_name : self.__convert_build__(job_name, jenkins_build)}
+        else:
+            return { job_name: {"request_status" : req_status }}
 
     def __latest_build__(self, job_name):
         try:
@@ -116,19 +118,12 @@ class JenkinsCollector:
         else:
             return self.last_results[job_name] if job_name in self.last_results else "other"
 
-    def collect_views(self):
-        with futures.ThreadPoolExecutor(max_workers=self.max_parallel_requests) as executor:
-            future_requests = ({executor.submit(self.__view__, view_name):
-                                    (view_name) for view_name in self.view_names})
-        builds = {}
-        for future_request in futures.as_completed(future_requests):
-            view = future_request.result()
-            if view:
-                builds.update(self.__extract_job__status__(view))
-            else:
-                builds.update({"all" : {"request_status" : "error"}})
-        logging.debug("Build status from views: %s", builds)
-        return builds
+    def collect_view(self, view_name):
+        view = self.__view__(view_name)
+        if view:
+            return self.__extract_job__status__(view)
+        else:
+            return { "all" : {"request_status" : "error"} }
 
     def __extract_job__status__(self, view):
         builds = {}
@@ -157,27 +152,27 @@ class JenkinsCollector:
 class JenkinsClient():
     """ copied and simplifed from jenkinsapi by Willow Garage in order to ensure singe requests for latest build
         as oposed to multiple requests and local status"""
-    def __init__(self, base_url, http_client):
-        self.base_url = base_url
+    def __init__(self, http_client):
         self.http_client = http_client
 
     def latest_build(self, job_name):
-        return json.loads(self.http_client.open_and_read("%s/job/%s/lastBuild/api/json?depth=0" % (self.base_url, job_name)))
+        return json.loads(self.http_client.open_and_read("/job/%s/lastBuild/api/json?depth=0" % job_name))
 
     def view(self, view_name):
-        return json.loads(self.http_client.open_and_read("%s/view/%s/api/json?depth=0" % (self.base_url, view_name)))
+        return json.loads(self.http_client.open_and_read("/view/%s/api/json?depth=0" % view_name))
 
 
 if  __name__ =='__main__':
+    base_url = sys.argv[1]
+    build = sys.argv[2]
+
+    if not base_url or not build:
+        print("Usage: python3 jenkinscollectory.py <base_url> <build>")
+        exit(42)
+
     """smoke test"""
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    jenkins = JenkinsClient("https://ci-t.sbb.ch")
-    print(jenkins.latest_build("mvp.mct.anbieter-dax_as.continuous"))
-
-    jenkins = JenkinsClient("https://ci-t.sbb.ch")
-    print(jenkins.view("foo"))
-
-    collector = JenkinsCollector("https://ci-t.sbb.ch",
-                                 job_names = ("mvp.mct.anbieter-dax_as.continuous", "mvp.hop.hop.continuous", "mvp.hop.hop-frasy.continuous"),
-                                 view_names = ("foo",))
+    collector = JenkinsCollector(base_url,
+                                 job_names = [build],
+                                 view_names = [])
     print(collector.collect())

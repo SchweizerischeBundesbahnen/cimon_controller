@@ -66,13 +66,13 @@ class AbstractBuildOutput():
         if "build" not in status:
             logging.debug("No build status found in given status, ignoring %s", status)
         elif has_request_status(status, "error"):
-            self.on_eror(status)
+            self.on_error(status)
             self.error_count+=1
         else:
             self.error_count=0
             self.on_status(status)
 
-    def on_eror(self, status):
+    def on_error(self, status):
         # if there is at least one build in error
         # tolerate signal_error_threshold errors, then
         # signal by all lights on

@@ -3,17 +3,18 @@
 __author__ = 'florianseidl'
 
 from output import AbstractBuildAmpel, default_signal_error_threshold
-from os import system
+import os
 from threading import Thread, Condition
 from datetime import datetime, timedelta
 import logging
+import platform
 
 default_flash_interval_sec=1
 
 # controll the cleware usb ampel (http://www.cleware-shop.de/epages/63698188.sf/de_DE/?ObjectPath=/Shops/63698188/Products/43/SubProducts/43-1)
 # uses the shell cleware tool (as user) as no python binding worked. Unfortunately this is kind of slow.
 # Extends AbstractBuildAmpel. See AbstractBuildAmpel for explaination of the logic (when does which light turn on)
-def create(configuration, key=None):
+def create(configuration, aesKey=None):
     return ClewareBuildAmpel(device=configuration.get("device", None),
                              signal_error_threshold=configuration.get("signalErrorThreshold", default_signal_error_threshold),
                              flash_interval_sec=configuration.get("flashIntervalSec", default_flash_interval_sec))
@@ -37,8 +38,8 @@ class ClewareAmpel():
     """control the cleware ampel using the clewarecontrol shell command """
 
     def __init__(self, device=None, flash_interval_sec=default_flash_interval_sec):
-        self.__device=device
-        self.__flash_interval_sec = flash_interval_sec
+        self.device=device
+        self.flash_interval_sec = flash_interval_sec
         self.red = self.green = self.yellow = self.flash = False
         self.__stopped = True
         self.condition = Condition() # condition has its own (r)lock
@@ -52,6 +53,7 @@ class ClewareAmpel():
 
     def display(self, red=False, yellow=False, green=False, flash=False):
         with self.condition:
+            logging.debug("New values...." + str(locals()))
             self.red = red
             self.yellow = yellow
             self.green = green
@@ -66,9 +68,10 @@ class ClewareAmpel():
     def output_loop(self):
         with self.condition:
             flash_state = False
-            logging.debug("Starting output loop....")
+            logging.debug("Starting Clewareampel Output Thread....")
             while not self.__stopped:
-                if self.flash:
+                logging.debug("flashinterval %s %s" % (str(self.flash_interval_sec), str(self.flash)))
+                if self.flash_interval_sec >= 0 and self.flash:
                     logging.debug("Output with flash...")
                     wait_until, flash_state = self.__do_output_flash__(flash_state)
                 else:
@@ -76,9 +79,9 @@ class ClewareAmpel():
                     wait_until, flash_state = self.__do_output_no_flash__()
                 while not self.__stopped and not self.updated and (not wait_until or wait_until > datetime.now()):
                     timeout = (wait_until - datetime.now()).total_seconds() if wait_until else None
-                    logging.debug("Waiting with timeout %ss", str(timeout))
+                    logging.debug("Waiting with timeout %s", str(timeout))
                     self.condition.wait(timeout=timeout)
-            logging.info("Cleawareampel Output Thread stopped.")
+            logging.info("Clewareampel Output Thread stopped.")
 
     def __do_output_no_flash__(self):
         logging.debug("Switch on: %s", str(locals().copy().pop("self")))
@@ -94,18 +97,22 @@ class ClewareAmpel():
             logging.debug("Flash on: %s", str(locals().copy().pop("self")))
             self.__output_to_cleware__(red=self.red, yellow=self.yellow, green=self.green)
         self.updated = False
-        return datetime.now() + timedelta(seconds=self.__flash_interval_sec / 2), not flash_state
+        return datetime.now() + timedelta(seconds=self.flash_interval_sec / 2), not flash_state
 
     def __output_to_cleware__(self, red, yellow, green):
-        self.__call_clewarecontrol__(0, red)
-        self.__call_clewarecontrol__(1, yellow)
-        self.__call_clewarecontrol__(2, green)
+        self.__call_clewarecontrol__((0, red),(1, yellow),(2, green))
 
-    def __call_clewarecontrol__(self, light, on):
-        device_str = "-d %s" % self.__device if self.__device else ""
-        command = "clewarecontrol %s -c 1 -as %s %s >> /dev/null" % (device_str, light, int(on))
+    def __call_clewarecontrol__(self, *light_on):
+        # enable null device on Windows for test purposees
+        nulldevice = "NUL" if platform.system() == "Windows" else "/dev/null"
+        device_str = "-d %s " % self.device if self.device else ""
+        command = ""
+        for light, on in light_on:
+            if command:
+                command += " && "
+            command += "clewarecontrol %s-c 1 -as %s %s > %s" % (device_str, light, int(on), nulldevice)
         logging.debug(command)
-        rc = system(command)
+        rc = os.system(command)
         if rc != 0:
             logging.warning("clewarecontrol returned %s", rc)
 
