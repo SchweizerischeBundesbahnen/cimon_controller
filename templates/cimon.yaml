@@ -44,6 +44,8 @@ output:
     # signalErrorThreshold: 3
     # the interval of the flashing in case the build is active in seconds. Default is 1 second. Put -1 to turn off flashing.
     # flashIntervalSec=1
+    # output all light states every given seconds. Put 0 to enforce absolute output every time. Default is 300 seconds (5 minutes)
+    # absoulteEverySec=300
   # Output to the Energenie Socket (Steckdosenleiste). Usually no configuration required.
   # remove if you dont use Energenie.
   - implementation: energenieoutput
@@ -52,6 +54,8 @@ output:
     # deviceNr:
     # the number of errors until error is signaled (all lights on). Default is 3 (the 4th error is displayed)
     # signalErrorThreshold: 3
+    # repeat the output every n times even if it is unchanged. Default is every 15 times.
+    # repeatEvery=15
 
 # logging configuration, will be passed on to the python loggin dictionary config 1:1.
 # will log from INFO to a file in /var/log/cimon/cimon.log and from CRITICAL to stderr

@@ -60,11 +60,14 @@ class CimonTest(TestCase):
         with self.assertRaises(KeyError):
             cimon.configure_from_dict({"collector" : [], "output" : []})
 
-    def test_reset(self):
-        c = Cimon(outputs = (self.__mock_output__(True), self.__mock_output__(False), self.__mock_output__(True)))
-        c.reset()
-        c.outputs[0].reset.assert_called_once_with()
-        c.outputs[2].reset.assert_called_once_with()
+    def test_stop_calls_close(self):
+        c = Cimon(outputs = (self.__mock_output__(close_method=True), self.__mock_output__(), self.__mock_output__(close_method=True)))
+        c.rescheduler = SimpleNamespace()
+        c.rescheduler.stop = MagicMock(spec=(""))
+        c.stop()
+        c.outputs[0].close.assert_called_once_with()
+        c.outputs[2].close.assert_called_once_with()
+
 
     def __do_run__(self, nr_outputs=1, **collector_type_status):
         c = Cimon(collectors = tuple(self.__mock_collector__(type, status) for type, status in collector_type_status.items()),
@@ -79,11 +82,13 @@ class CimonTest(TestCase):
         collector.collect = MagicMock(spec=(""), return_value = status)
         return collector
 
-    def __mock_output__(self, reset_method=False):
+    def __mock_output__(self, open_method=False, close_method=False):
         output = SimpleNamespace()
         output.on_update = MagicMock(spec=(""))
-        if reset_method:
-            output.reset = MagicMock(spec=(""))
+        if open_method:
+            output.open = MagicMock(spec=(""))
+        if close_method:
+            output.close = MagicMock(spec=(""))
         return output
 
     def test_parse_hours_or_days_1(self):

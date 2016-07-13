@@ -112,15 +112,14 @@ class AbstractBuildOutput():
         self.signal_status(status=status, building=building)
         self.last_status = (status, building)
 
-    def reset(self):
-        logging.debug("Reset called, switching off")
+    def close(self):
+        logging.debug("Switching off")
         self.signal_off()
         self.last_status = None
         self.error_count = 0
 
     def self_check(self):
         logging.info("Self check initiated...")
-        self.reset()
         self.signal_status(status="success", building=False)
         sleep(1)
         self.signal_status(status="success", building=True)
@@ -140,6 +139,7 @@ class AbstractBuildOutput():
         self.signal_error()
         sleep(1)
         self.signal_off()
+        self.close()
         logging.info("Self check complete")
 
 

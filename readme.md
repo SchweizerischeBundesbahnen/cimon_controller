@@ -45,22 +45,25 @@ The configuration reflects the part of the cimon.yaml file within the collector 
 The key object is a binary string of an AES key for pyaes to decrypt passwords or other sensitive configuration stored within the configuration in encrypted and base64 encoded form.
 
 ### Adding collector
-In order to add your own collector, you need to implement a class within your module as described above. This class has to implement the method "collect" and contain an attribute "type".
+In order to add your own collector, you need to implement a class within your module as described above. This class has to implement the method "collect" and contain an attribute "type". It can optionally implement the method "close".
 
     class MyCollector:
         type = "strange" # the type of collector, defines the format of the status map used (e.g. "build")
     
+        def close(self):
+            pass # close your input, will be called at the start of the cimon application or if pausing. Will be called multiple times.
+
         def collect(self):
             return {} # query the status from server and put into a dictionary of status results. 
                       # This dictionary is read by the output accuring to the type of collector.
 
 ### Adding an output
-In order to add your own output, you need to implement a class within your module as described above. This class has to implement the method "on_update" and can optionally implement the method "reset".
+In order to add your own output, you need to implement a class within your module as described above. This class has to implement the method "on_update" and can optionally implement the method "close".
   
     class MyOutput:
     
-        def reset(self):
-            pass # reset your output device here if you need to, will be called on start of the cimon application
+        def close(self):
+            pass # close or reset your output device here if you need to, will be called on shutdown of the cimon application. Will be called multiple times.
             
         def on_update(self, status):
             pass # display the status on the given device

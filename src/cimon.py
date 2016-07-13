@@ -58,15 +58,14 @@ class Cimon():
         self.operating_hours=sorted(operating_hours)
         self.operating_days=sorted(operating_days)
 
-    def reset(self):
-        for output in self.outputs:
-            if hasattr(output, "reset"):
-                output.reset()
+    def close(self):
+        for target in self.outputs + self.collectors:
+            if hasattr(target, "close"):
+                target.close()
 
     def start(self):
         logging.info("Starting cimon...")
         self.rescheduler = ReScheduler(self.run, self.polling_interval_sec)
-        self.reset()
         self.rescheduler.start()
         logging.debug("Started cimon")
 
@@ -75,14 +74,14 @@ class Cimon():
             logging.debug("Stopping cimon...")
             self.rescheduler.stop()
             self.rescheduler = None
-            self.reset()
+            self.close()
         logging.info("Stopped cimon")
 
     def run(self):
         if self.is_operating(datetime.now()):
             self.collect_and_output()
         else:
-            self.reset() # reset all output before waiting
+            self.close() # reset all output before waiting
             return self.sec_to_next_operating(datetime.now())
 
     def is_operating(self, now):
