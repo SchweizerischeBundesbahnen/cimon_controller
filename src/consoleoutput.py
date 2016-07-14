@@ -10,6 +10,7 @@ def create(configuration, key=None):
 class ConsoleOutput(AbstractBuildAmpel):
     """Mock for manual testing"""
     def __init__(self):
+        super(ConsoleOutput, self).__init__()
         self.__current_signal__ = None
 
     def signal(self, red, yellow, green, flash=False):

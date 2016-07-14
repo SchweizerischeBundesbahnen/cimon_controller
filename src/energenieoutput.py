@@ -47,10 +47,13 @@ class Energenie():
 
     def __switch_if_changed__(self, *socket_on):
         if socket_on != self.__last_state or self.__repeat_count >= self.repeat_every:
+            logging.debug("Change or time to repeat output to energenie: %s", str(socket_on))
             self.__last_state = socket_on
             self.__call_sispmctl__(*socket_on)
-            self.__repeat_count = 0
-        self.__repeat_count += 1
+            self.__repeat_count = 1
+        else:
+            logging.debug("Ignoring repeated output to energenie")
+            self.__repeat_count += 1
 
     def __call_sispmctl__(self, *socket_on):
         device_str = "-d %s" % self.__device_nr if self.__device_nr else ""
@@ -61,7 +64,7 @@ class Energenie():
         logging.debug(command)
         rc = system(command)
         if rc != 0:
-            logging.warning("sispmctl returned %s", rc)
+            logging.warning("Energenie output: sispmctl returned %s", rc)
 
 if  __name__ =='__main__':
     """smoke test"""

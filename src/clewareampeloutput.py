@@ -35,7 +35,7 @@ class ClewareBuildAmpel(AbstractBuildAmpel):
 
     def close(self):
         super().close()
-        sleep(7) # wait for the lights to be turned of before stopping the output
+        self.cleware_ampel.wait_for_display()
         self.cleware_ampel.stop()
 
 class ClewarecontrolClewareAmpel():
@@ -54,6 +54,12 @@ class ClewarecontrolClewareAmpel():
         self.current_display = (None, None, None)
         self.absolute_every = timedelta(seconds=absoulte_every_sec)
         self.__absolute_next = datetime.now() + self.absolute_every
+
+    def wait_for_display(self, timeout=7):
+        end = datetime.now() + timedelta(seconds=timeout)
+        with self.condition:
+            while datetime.now() < end and self.current_display != self.to_display:
+                self.condition.wait(timeout=max((datetime.now() - end).total_seconds(), 0.01)) # wait for at least 10 milliseonds to release lock
 
     def stop(self):
         with self.condition:
@@ -74,10 +80,10 @@ class ClewarecontrolClewareAmpel():
             self.condition.notify_all()
 
     def output_loop(self):
-        with self.condition:
-            flash_state = False
-            logging.debug("Starting Clewareampel Output Thread....")
-            while not self.__stopped:
+        flash_state = False
+        logging.debug("Starting Clewareampel Output Thread....")
+        while not self.__stopped:
+            with self.condition:
                 logging.debug("flashinterval %s %s" % (str(self.flash_interval_sec), str(self.flash)))
                 if self.flash_interval_sec >= 0 and self.flash:
                     logging.debug("Output with flash...")
@@ -86,10 +92,13 @@ class ClewarecontrolClewareAmpel():
                     logging.debug("Output without flash...")
                     wait_until, flash_state = self.__do_output_no_flash__()
                 while not self.__stopped and not self.updated and (not wait_until or wait_until > datetime.now()):
+                    # if no flashing, wait forever, else wait for the next flash signal
+                    # in any case wait at least 10 millis to release the lock and allow for signalling
                     timeout = (wait_until - datetime.now()).total_seconds() if wait_until else None
                     logging.debug("Waiting with timeout %s", str(timeout))
                     self.condition.wait(timeout=timeout)
             logging.info("Clewareampel Output Thread stopped.")
+
 
     def __do_output_no_flash__(self):
         logging.debug("Switch on: %s", self.to_display)
@@ -111,6 +120,7 @@ class ClewarecontrolClewareAmpel():
 
     def __output_to_cleware__(self, red, yellow, green):
         if datetime.now() >= self.__absolute_next:
+            logging.debug("Absolute output to cleware ampel")
             if self.__call_clewarecontrol__((self.red_light, red), (self.yellow_light, yellow), (self.green_light, green)):
                 self.current_display = (red, yellow, green)
                 self.__absolute_next = datetime.now() + self.absolute_every
@@ -120,6 +130,8 @@ class ClewarecontrolClewareAmpel():
                                                                  (self.green_light, green, self.current_display[2])) if on != current]
             if self.__call_clewarecontrol__(*switches):
                 self.current_display = (red, yellow, green)
+        else:
+            logging.debug("No change and not time for absolute output, doing nothing.")
 
     def __call_clewarecontrol__(self, *light_on):
         # enable null device on Windows for test purposees
@@ -129,7 +141,7 @@ class ClewarecontrolClewareAmpel():
         for light, on in light_on:
             if command:
                 command += " && "
-            command += "clewarecontrol %s-c 1 -as %s %s > %s" % (device_str, light, int(on), nulldevice)
+            command += "clewarecontrol %s-c 1 -as %s %s > %s 2>&1" % (device_str, light, int(on), nulldevice)
         logging.debug(command)
         rc = os.system(command)
         if rc != 0:

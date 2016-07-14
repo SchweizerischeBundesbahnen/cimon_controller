@@ -113,7 +113,7 @@ class AbstractBuildOutput():
         self.last_status = (status, building)
 
     def close(self):
-        logging.debug("Switching off")
+        logging.info("Switching off")
         self.signal_off()
         self.last_status = None
         self.error_count = 0
