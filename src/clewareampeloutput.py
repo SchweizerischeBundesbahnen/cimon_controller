@@ -8,8 +8,9 @@ from threading import Thread, Condition
 from datetime import datetime, timedelta
 import logging
 import platform
+from time import sleep
 
-default_flash_interval_sec=0.4
+default_flash_interval_sec=1.5
 default_absoulte_every_sec=300
 
 # controll the cleware usb ampel (http://www.cleware-shop.de/epages/63698188.sf/de_DE/?ObjectPath=/Shops/63698188/Products/43/SubProducts/43-1)
@@ -34,6 +35,7 @@ class ClewareBuildAmpel(AbstractBuildAmpel):
 
     def close(self):
         super().close()
+        sleep(7) # wait for the lights to be turned of before stopping the output
         self.cleware_ampel.stop()
 
 class ClewarecontrolClewareAmpel():
@@ -103,8 +105,8 @@ class ClewarecontrolClewareAmpel():
             logging.debug("Flash on: %s", str(locals().copy().pop("self")))
             self.__output_to_cleware__(*self.to_display)
         self.updated = False
-        # if currently off (flash state True as it is the previous state) then show for 1/3, else if on for 2/3 of the time
-        interval = self.flash_interval_sec * 0.33 if flash_state else self.flash_interval_sec * 0.67
+        # if currently off (flash state True as it is the previous state) then show for 1/5, else if on for 4/5 of the time
+        interval = self.flash_interval_sec * 0.2 if flash_state else self.flash_interval_sec * 0.8
         return datetime.now() + timedelta(seconds=interval), not flash_state
 
     def __output_to_cleware__(self, red, yellow, green):

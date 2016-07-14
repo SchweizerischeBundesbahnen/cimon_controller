@@ -42,7 +42,7 @@ class TestClewarecontrolClewareAmpel(TestCase):
     def test_flash_on_off(self):
         self.ampel = self.create_cleware_ampel()
         self.ampel.display(green=True, flash=True)
-        sleep(0.15) # allow for 1 flashes (on-off)
+        sleep(0.19) # allow for 1 flashes (on-off)
         self.assertEqual(self.ampel.__call_clewarecontrol__.call_count, 2)
         self.ampel.__call_clewarecontrol__.assert_has_calls([call((self.red,False), (self.yellow,False), (self.green,True)),
                                                            call((self.green,False))])
@@ -50,7 +50,7 @@ class TestClewarecontrolClewareAmpel(TestCase):
     def test_flash_on_off_on_off(self):
         self.ampel = self.create_cleware_ampel()
         self.ampel.display(green=True, flash=True)
-        sleep(0.38) # allow for 1 flashes (on-off)
+        sleep(0.39) # allow for 1 flashes (on-off)
         self.assertEqual(self.ampel.__call_clewarecontrol__.call_count, 4)
         self.ampel.__call_clewarecontrol__.assert_has_calls([call((self.red,False), (self.yellow,False), (self.green,True)),
                                                              call((self.green,False)),
@@ -91,7 +91,7 @@ class TestClewarecontrolClewareAmpel(TestCase):
     def test_flash_on_off_on_off_no_flash_but_same(self):
         self.ampel = self.create_cleware_ampel()
         self.ampel.display(green=True, flash=True)
-        sleep(0.38) # allow for 1 flashes (on-off)
+        sleep(0.39) # allow for 1 flashes (on-off)
         self.ampel.display(green=True, flash=False)
         # last display is not shown because it is the same value
         self.assertEqual(self.ampel.__call_clewarecontrol__.call_count, 4)
