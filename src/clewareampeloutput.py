@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import logging
 import platform
 
-default_flash_interval_sec=1
+default_flash_interval_sec=0.4
 default_absoulte_every_sec=300
 
 # controll the cleware usb ampel (http://www.cleware-shop.de/epages/63698188.sf/de_DE/?ObjectPath=/Shops/63698188/Products/43/SubProducts/43-1)
@@ -103,7 +103,9 @@ class ClewarecontrolClewareAmpel():
             logging.debug("Flash on: %s", str(locals().copy().pop("self")))
             self.__output_to_cleware__(*self.to_display)
         self.updated = False
-        return datetime.now() + timedelta(seconds=self.flash_interval_sec / 2), not flash_state
+        # if currently off (flash state True as it is the previous state) then show for 1/3, else if on for 2/3 of the time
+        interval = self.flash_interval_sec * 0.33 if flash_state else self.flash_interval_sec * 0.67
+        return datetime.now() + timedelta(seconds=interval), not flash_state
 
     def __output_to_cleware__(self, red, yellow, green):
         if datetime.now() >= self.__absolute_next:
