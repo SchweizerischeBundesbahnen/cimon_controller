@@ -75,7 +75,7 @@ logging:
       stream: ext://sys.stderr
     file:
       # Template proposes a rotating file for 10 days, one month backup
-      class: logging.TimedRotatingFileHandler
+      class: logging.handlers.TimedRotatingFileHandler
       formatter: simpleFormater
       level: INFO
       filename: /var/log/cimon/cimon.log
