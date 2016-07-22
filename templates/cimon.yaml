@@ -42,7 +42,7 @@ output:
     # device:
     # the number of errors until error is signaled (all lights on). Default is 3 (the 4th error is displayed)
     # signalErrorThreshold: 3
-    # the interval of the flashing in case the build is active in seconds. Default is 1 second. Put -1 to turn off flashing.
+    # the interval of the flashing in case the build is active in seconds. Default is 1.5 second. Put -1 to turn off flashing.
     # flashIntervalSec=1.5
     # output all light states every given seconds. Put 0 to enforce absolute output every time. Default is 300 seconds (5 minutes)
     # absoulteEverySec=300

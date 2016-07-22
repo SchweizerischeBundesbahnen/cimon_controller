@@ -91,7 +91,7 @@ class SamlAuthenticationHandler():
         saml_cookie = response.getheader("Set-Cookie")
         if saml_cookie:
             logging.info("Received new SAML Cookie")
-            logging.debug("New SAML Cookie: '%s'", saml_cookie)
+            logging.debug("New SAML Cookie: '%s...%s'", saml_cookie[:20], saml_cookie[-20:]) # log only start in order to avoid leak
             return saml_cookie
         else:
             logging.error("Failed to renew SAML Cookie, did not receive Set-Cookie")
@@ -134,7 +134,7 @@ class HttpClient:
             logging.debug("Request to %s", self.__request_url__(request_path))
             for key, value in request_headers.items():
                 request.add_header(key, value)
-            logging.debug("Request headers: %.120s..." % request.headers)
+            logging.debug("Request headers: %s" % request.headers.keys()) # do not log contents to avoid leak
             return self.__open__(request)
         except HTTPError as e:
             if e.code in (401,402,403,407,408) and retry < self.max_retries and self.authentication_handler.handle_forbidden(request_headers, e.code): # maybe authentication issue
