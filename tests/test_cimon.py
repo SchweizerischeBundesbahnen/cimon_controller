@@ -7,6 +7,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 from types import SimpleNamespace
 from datetime import datetime
+import yaml
 
 class CimonTest(TestCase):
 
@@ -44,22 +45,6 @@ class CimonTest(TestCase):
     def test_run_1_collector_0_output(self):
         self.__do_run__(1, mock={"a" : { "b" : "c", "e": "f"}})
 
-    def test_configure_file(self):
-        c = cimon.configure_from_yaml_file("%s/testdata/cimon.yaml" % os.path.dirname(__file__))
-        self.assertEqual(len(c.collectors), 1)
-        self.assertEqual(len(c.outputs), 1)
-        self.assertEqual(c.polling_interval_sec, 10)
-        self.assertEquals(type(c.collectors[0]).__name__, "RotatingBuildCollector")
-        self.assertEquals(type(c.outputs[0]).__name__, "ConsoleOutput")
-
-    def test_configure_unkonwn_collector(self):
-        with self.assertRaises(ImportError):
-            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "gibtsgarnicht"}], "output" : [{"implementation" : "rotatingcollector"}]})
-
-    def test_configure_no_polling_interval(self):
-        with self.assertRaises(KeyError):
-            cimon.configure_from_dict({"collector" : [], "output" : []})
-
     def test_stop_calls_close(self):
         c = Cimon(outputs = (self.__mock_output__(close_method=True), self.__mock_output__(), self.__mock_output__(close_method=True)))
         c.rescheduler = SimpleNamespace()
@@ -90,6 +75,8 @@ class CimonTest(TestCase):
         if close_method:
             output.close = MagicMock(spec=(""))
         return output
+
+class CimonOperatingDaysHoursTest(TestCase):
 
     def test_parse_hours_or_days_1(self):
         self.assertEquals(cimon.__parse_hours_or_days__(1, None), (1, ))
@@ -247,6 +234,72 @@ class CimonTest(TestCase):
         c = Cimon(operating_hours = tuple(range(6,22)),
                   operating_days = (1,))
         self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), (4*24+6)*60*60 - 12*60*60 - 7*60 - 42)
+
+class CimonConfigurationTests(TestCase):
+
+    def test_configure_file(self):
+        c = cimon.configure_from_yaml_file("%s/testdata/cimon.yaml" % os.path.dirname(__file__))
+        self.assertEqual(len(c.collectors), 1)
+        self.assertEqual(len(c.outputs), 1)
+        self.assertEqual(c.polling_interval_sec, 10)
+        self.assertEquals(type(c.collectors[0]).__name__, "RotatingBuildCollector")
+        self.assertEquals(type(c.outputs[0]).__name__, "ConsoleOutput")
+
+    def test_configure_file_invalid_yaml_star(self):
+        with self.assertRaises(yaml.YAMLError):
+            cimon.configure_from_yaml_file("%s/testdata/cimon_invalid_yaml_star.yaml" % os.path.dirname(__file__))
+
+    def test_configure_file_invalid_yaml_no_collector(self):
+        with self.assertRaises(yaml.YAMLError):
+            cimon.configure_from_yaml_file("%s/testdata/cimon_invalid_yaml_no_collector.yaml" % os.path.dirname(__file__))
+
+    def test_configure_file_invalid_yaml_invalid_list_entry(self):
+        with self.assertRaises(yaml.YAMLError):
+            cimon.configure_from_yaml_file("%s/testdata/cimon_invalid_yaml_invalid_list_entry.yaml" % os.path.dirname(__file__))
+
+    def test_configure_unkonwn_collector(self):
+        with self.assertRaises(ImportError):
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "gibtsgarnicht"}], "output" : [{"implementation" : "consoleoutput"}]})
+
+    def test_configure_unkonwn_output(self):
+        with self.assertRaises(ImportError):
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "gibtsgarnicht"}]})
+
+    def test_configure_no_polling_interval(self):
+        with self.assertRaises(KeyError):
+            cimon.configure_from_dict({ "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "consoleoutput"}] })
+
+    def test_configure_no_collectors(self):
+        with self.assertRaises(KeyError):
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "output" : [{"implementation" : "consoleoutput"}]})
+
+    def test_configure_no_output(self):
+        with self.assertRaises(KeyError):
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "rotatingcollector"}]})
+
+    def test_configure_empty_collector_list(self):
+        with self.assertRaises(ValueError):
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [], "output" : [{"implementation" : "rotatingcollector"}]})
+
+    def test_configure_empty_output_list(self):
+        with self.assertRaises(ValueError):
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "rotatingcollector"}], "output" : []})
+
+    def test_configure_collector_in_output(self):
+        with self.assertRaises(AttributeError):
+            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "rotatingcollector"}] })
+
+    def test_configure_output_in_collector(self):
+        with self.assertRaises(AttributeError):
+            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "consoleoutput"}], "output" : [{"implementation" : "consoleoutput"}] })
+
+    def test_configure_other_module_in_collector(self):
+        with self.assertRaises(AttributeError):
+            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "configutil"}], "output" : [{"implementation" : "consoleoutput"}] })
+
+    def test_configure_other_module_in_output(self):
+        with self.assertRaises(AttributeError):
+            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "configutil"}] })
 
 if __name__ == '__main__':
     main()

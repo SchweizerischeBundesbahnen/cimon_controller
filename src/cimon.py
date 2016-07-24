@@ -140,21 +140,34 @@ def configure_from_yaml_file(file, keypath=None):
 
 def configure_from_dict(configuration, key=None):
     try:
+        __configure_logging__(configuration)
+        polling_interval_sec = int(configuration["pollingIntervalSec"])
+        if not configuration["collector"]:
+            raise ValueError("No collectors configured")
+        collectors=tuple(__configure_dynamic__(configuration["collector"], key))
+        __check_all_implement_method__(collectors, "collect")
+        if not configuration["output"]:
+            raise ValueError("No outputs configured")
+        outputs=tuple(__configure_dynamic__(configuration["output"], key))
+        __check_all_implement_method__(outputs, "signal")
+        operating_hours = __parse_hours_or_days__(configuration.get("operatingHours", "*"), "0-23")
+        operating_days = __parse_hours_or_days__(configuration.get("operatingDays", "*"), "0-6")
+        logging.info("Read configuration: %s", configuration)
+        return Cimon(polling_interval_sec = polling_interval_sec,
+                     collectors = collectors,
+                     outputs=outputs,
+                     operating_hours=operating_hours,
+                     operating_days=operating_days)
+    except Exception:
+        logging.exception("Configuration failed, invalid configuration: %s", configuration)
+        raise
+
+def __configure_logging__(configuration):
+    try:
         logging.config.dictConfig(configuration["logging"])
     except: # default config: log all to console
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logging.exception("Configuration of logging failed, using default configuration")
-    polling_interval_sec = int(configuration["pollingIntervalSec"])
-    collectors=tuple(__configure_dynamic__(configuration["collector"], key))
-    outputs=tuple(__configure_dynamic__(configuration["output"], key))
-    operating_hours = __parse_hours_or_days__(configuration.get("operatingHours", "*"), "0-23")
-    operating_days = __parse_hours_or_days__(configuration.get("operatingDays", "*"), "0-6")
-    logging.info("Read configuration: %s", configuration)
-    return Cimon(polling_interval_sec = polling_interval_sec,
-                 collectors = collectors,
-                 outputs=outputs,
-                 operating_hours=operating_hours,
-                 operating_days=operating_days)
 
 def __configure_dynamic__(config, key=None):
     # a tiny bit of hand-made logic to allow dynamic addition of collecrs and output
@@ -167,6 +180,11 @@ def __configure_dynamic__(config, key=None):
         module =__import__(element_config["implementation"])
         objects.append(module.create(element_config, key))
     return objects
+
+def __check_all_implement_method__(objects, method_name):
+    for object in objects:
+        if not hasattr(object, method_name):
+            raise AttributeError("%s does not implmement the method '%s', maybe did API is not correctly implemented or confused collector and output?" % (object, method_name))
 
 def __parse_hours_or_days__(periodstring, default):
     if type(periodstring) is int:
@@ -187,17 +205,7 @@ def __parse_hours_or_days__(periodstring, default):
     elif default:
         return __parse_hours_or_days__(default, None)
 
-if  __name__ =='__main__':
-    """the actual start of the cimon masterboxcontrolprogram"""
-    # config file location may be provided via command line arg
-    parser = ArgumentParser(description="Run the cimon masterboxcontrolprogram")
-    parser.add_argument("-c",  "--config", help="The cimon yaml config file with its path")
-    parser.add_argument("-k",  "--key", help="The password key file with its path")
-    args = parser.parse_args()
-    # read yaml config file (mandatory)
-    configfilepath = args.config or find_config_file_path("cimon.yaml")
-    keypath = args.key or find_config_file_path("key.bin", True)
-    masterboxcontrolprogram = configure_from_yaml_file(configfilepath, keypath)
+def __start__(masterboxcontrolprogram):
     # register for proper exit
     atexit.register(masterboxcontrolprogram.stop) # listens to SIGINT, also works on windows....
     if hasattr(signal, "SIGHUP"): # linux only
@@ -207,5 +215,21 @@ if  __name__ =='__main__':
     # now start
     masterboxcontrolprogram.start()
 
+if  __name__ =='__main__':
+    """the actual start of the cimon masterboxcontrolprogram"""
+    # config file location may be provided via command line arg
+    parser = ArgumentParser(description="Run the cimon masterboxcontrolprogram")
+    parser.add_argument("-c",  "--config", help="The cimon yaml config file with its path")
+    parser.add_argument("-k",  "--key", help="The password key file with its path")
+    parser.add_argument("--validate", action="store_true", help="Just validate the config file, do not run cimoon")
+    args = parser.parse_args()
+    # read yaml config file (mandatory)
+    configfilepath = args.config or find_config_file_path("cimon.yaml")
+    keypath = args.key or find_config_file_path("key.bin", True)
+    masterboxcontrolprogram = configure_from_yaml_file(configfilepath, keypath)
+    if args.validate:
+        sys.exit(0) # just validate the config, do not start. If an exception was raised it will exit with 1
+    else:
+        __start__(masterboxcontrolprogram)
 
 

@@ -4,10 +4,10 @@
 pollingIntervalSec: 60
 # operate on which days of the week, 0=monday and 6=sunday
 # input can be period like 0-4 (start and end inclusive) or list like 0,2,3 or a combination like 0-4,6 or * for all days
-# 0-4 is Monday to Friday, * or 0-6 is all days
+# 0-4 is Monday to Friday, "*" or 0-6 is all days
 operatingDays: 0-4
 # similar to weekdays but the hours of the day
-# for instance 6-21 is 06:00 to 21:59 and * or 0-23 is allways
+# for instance 6-21 is 06:00 to 21:59 and "*" or 0-23 is allways
 operatingHours: 6-21
 # collectors - fetching the current status to display, for instance build status
 # each entry is an implementation module (python file without ".py") and has to be loadable

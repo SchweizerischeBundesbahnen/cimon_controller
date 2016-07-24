@@ -97,7 +97,7 @@ class ClewarecontrolClewareAmpel():
                     timeout = (wait_until - datetime.now()).total_seconds() if wait_until else None
                     logging.debug("Waiting with timeout %s", str(timeout))
                     self.condition.wait(timeout=timeout)
-            logging.info("Clewareampel Output Thread stopped.")
+        logging.info("Clewareampel Output Thread stopped.")
 
 
     def __do_output_no_flash__(self):
