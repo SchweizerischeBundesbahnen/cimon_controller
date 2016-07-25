@@ -4,11 +4,14 @@ __author__ = 'florianseidl'
 
 from base64 import b64encode
 from urllib.request import urlopen, HTTPError, URLError, ContentTooShortError, Request
+from urllib.parse import unquote
 from time import sleep
 from threading import Condition
 import logging
 import ssl
 import sys
+
+logger = logging.getLogger(__name__)
 
 def create_http_client(base_url, username = None, password = None, saml_login_url=None, verify_ssl=True):
     if saml_login_url:
@@ -86,15 +89,17 @@ class SamlAuthenticationHandler():
 
     def __renew_saml_cookie__(self):
         # looks as if we have to aquire a (new) SAML Token....
-        logging.debug("Requesting new SAML Cookie from %s...", self.login_http_client)
+        logger.debug("Requesting new SAML Cookie from %s...", self.login_http_client)
         response = self.login_http_client.open()
         saml_cookie = response.getheader("Set-Cookie")
         if saml_cookie:
-            logging.info("Received new SAML Cookie")
-            logging.debug("New SAML Cookie: '%s...%s'", saml_cookie[:20], saml_cookie[-20:]) # log only start in order to avoid leak
+            logger.info("Received new SAML Cookie")
+            if logger.isEnabledFor(logging.DEBUG):
+                saml_cookie_plantext = unquote(saml_cookie)
+                logger.debug("New SAML Cookie: '%s...%s'", saml_cookie_plantext[:65], saml_cookie_plantext[-125:]) # log only start in order to avoid leak
             return saml_cookie
         else:
-            logging.error("Failed to renew SAML Cookie, did not receive Set-Cookie")
+            logger.error("Failed to renew SAML Cookie, did not receive Set-Cookie")
             return self.saml_cookie # try with old one, will try another login if cookie is missing....
 
 class HttpClient:
@@ -117,7 +122,7 @@ class HttpClient:
                 ctx.verify_mode = ssl.CERT_NONE
                 self.ctx = ctx
             else:
-                logging.warning("Disabling verify ssl is not supported in python version below 3.4.3. Ignoring configuration, ssl verfication is enabled")
+                logger.warning("Disabling verify ssl is not supported in python version below 3.4.3. Ignoring configuration, ssl verfication is enabled")
                 self.ctx = None
         else:
             # verification activated, default will be fine
@@ -131,10 +136,10 @@ class HttpClient:
         request_headers = self.authentication_handler.request_headers()
         try:
             request = Request(self.__request_url__(request_path))
-            logging.debug("Request to %s", self.__request_url__(request_path))
+            logger.debug("Request to %s", self.__request_url__(request_path))
             for key, value in request_headers.items():
                 request.add_header(key, value)
-            logging.debug("Request headers: %s" % request.headers.keys()) # do not log contents to avoid leak
+            logger.debug("Request headers: %s" % request.headers.keys()) # do not log contents to avoid leak
             return self.__open__(request)
         except HTTPError as e:
             if e.code in (401,402,403,407,408) and retry < self.max_retries and self.authentication_handler.handle_forbidden(request_headers, e.code): # maybe authentication issue
@@ -150,7 +155,7 @@ class HttpClient:
                 raise e
 
     def __retry__(self, text, request_path, retry):
-        logging.info("%s requesting %s, retry %s", text, self.__request_url__(request_path), retry)
+        logger.info("%s requesting %s, retry %s", text, self.__request_url__(request_path), retry)
         sleep(retry *  self.retry_delay_sec) # back off after first time
         return self.open(request_path, retry + 1)
 

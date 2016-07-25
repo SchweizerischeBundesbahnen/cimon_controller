@@ -7,6 +7,8 @@ import logging
 
 default_signal_error_threshold=3
 
+logger = logging.getLogger(__name__)
+
 # Generic Logic for any kind of build output and traffic light like signaling device output.
 #
 # AbstractBuildOutput: Generic Outupt for build result.
@@ -64,7 +66,7 @@ class AbstractBuildOutput():
 
     def on_update(self, status):
         if "build" not in status:
-            logging.debug("No build status found in given status, ignoring %s", status)
+            logger.debug("No build status found in given status, ignoring %s", status)
         elif has_request_status(status, "error"):
             self.on_error(status)
             self.error_count+=1
@@ -77,10 +79,10 @@ class AbstractBuildOutput():
         # tolerate signal_error_threshold errors, then
         # signal by all lights on
         if self.error_count < self.signal_error_threshold and self.last_status:
-            logging.debug("Tolerating error and signaling previous state, count is %d", self.error_count)
+            logger.debug("Tolerating error and signaling previous state, count is %d", self.error_count)
             self.signal_status(*self.last_status)
         else:
-            logging.debug("Signaling an error")
+            logger.debug("Signaling an error")
             self.signal_error()
 
     def on_status(self, status):
@@ -102,24 +104,24 @@ class AbstractBuildOutput():
             self.__signal_status_and_store__("success", building)
         # if all builds are request_status == "not_found", signal nothing
         elif self.last_status:
-            logging.debug("No build found, repeating last stored signal")
+            logger.debug("No build found, repeating last stored signal")
             self.signal_status(*self.last_status)
         else:
-            logging.info("No build found, no signal")
+            logger.info("No build found, no signal")
 
     def __signal_status_and_store__(self, status, building):
-        logging.debug("Signaling %s, building=%s", status, building)
+        logger.debug("Signaling %s, building=%s", status, building)
         self.signal_status(status=status, building=building)
         self.last_status = (status, building)
 
     def close(self):
-        logging.info("Switching off")
+        logger.info("Switching off")
         self.signal_off()
         self.last_status = None
         self.error_count = 0
 
     def self_check(self):
-        logging.info("Self check initiated...")
+        logger.info("Self check initiated...")
         self.signal_status(status="success", building=False)
         sleep(1)
         self.signal_status(status="success", building=True)
@@ -140,7 +142,7 @@ class AbstractBuildOutput():
         sleep(1)
         self.signal_off()
         self.close()
-        logging.info("Self check complete")
+        logger.info("Self check complete")
 
 
 class AbstractBuildAmpel(AbstractBuildOutput):

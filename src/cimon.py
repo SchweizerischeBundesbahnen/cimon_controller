@@ -42,6 +42,8 @@ from argparse import ArgumentParser
 # append the user home directory to sys.path
 sys.path.append("%s/cimon/plugins" % os.path.expanduser("~"))
 
+logger = logging.getLogger(__name__)
+
 class Cimon():
     """ Start and configuration of the build monitor """
 
@@ -64,18 +66,18 @@ class Cimon():
                 target.close()
 
     def start(self):
-        logging.info("Starting cimon...")
+        logger.info("Starting cimon...")
         self.rescheduler = ReScheduler(self.run, self.polling_interval_sec)
         self.rescheduler.start()
-        logging.debug("Started cimon")
+        logger.debug("Started cimon")
 
     def stop(self,**kwargs): # has to accept extra params from signal (signal and frame)
         if self.rescheduler:
-            logging.debug("Stopping cimon...")
+            logger.debug("Stopping cimon...")
             self.rescheduler.stop()
             self.rescheduler = None
             self.close()
-        logging.info("Stopped cimon")
+        logger.info("Stopped cimon")
 
     def run(self):
         if self.is_operating(datetime.now()):
@@ -91,16 +93,16 @@ class Cimon():
                (not self.operating_days or now.weekday() in self.operating_days)
 
     def collect_and_output(self):
-        logging.debug("Running collection")
+        logger.debug("Running collection")
         # first collect the current status
         status = {}
         for collector in self.collectors:
             status[collector.type] = collector.collect()
-        logging.debug("Collected status: %s", status)
+        logger.debug("Collected status: %s", status)
         # then display the current status
         for output in self.outputs:
             output.on_update(status)
-        logging.info("Collected status and updated outputs")
+        logger.info("Collected status and updated outputs")
 
     def sec_to_next_operating(self, now):
         next_operating_hour = self.__find_same_or_next_day_or_hour__(self.operating_hours, now.hour)
@@ -152,14 +154,14 @@ def configure_from_dict(configuration, key=None):
         __check_all_implement_method__(outputs, "signal")
         operating_hours = __parse_hours_or_days__(configuration.get("operatingHours", "*"), "0-23")
         operating_days = __parse_hours_or_days__(configuration.get("operatingDays", "*"), "0-6")
-        logging.info("Read configuration: %s", configuration)
+        logger.info("Read configuration: %s", configuration)
         return Cimon(polling_interval_sec = polling_interval_sec,
                      collectors = collectors,
                      outputs=outputs,
                      operating_hours=operating_hours,
                      operating_days=operating_days)
     except Exception:
-        logging.exception("Configuration failed, invalid configuration: %s", configuration)
+        logger.exception("Configuration failed, invalid configuration: %s", configuration)
         raise
 
 def __configure_logging__(configuration):
@@ -167,7 +169,7 @@ def __configure_logging__(configuration):
         logging.config.dictConfig(configuration["logging"])
     except: # default config: log all to console
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-        logging.exception("Configuration of logging failed, using default configuration")
+        logger.exception("Configuration of logging failed, using default configuration")
 
 def __configure_dynamic__(config, key=None):
     # a tiny bit of hand-made logic to allow dynamic addition of collecrs and output

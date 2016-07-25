@@ -31,6 +31,8 @@ from configutil import decrypt
 default_max_parallel_requests=7
 default_update_views_every = 50
 
+logger = logging.getLogger(__name__)
+
 def create(configuration, key=None):
     return JenkinsCollector(base_url = configuration["url"],
                             username = configuration.get("user", None),
@@ -75,7 +77,7 @@ class JenkinsCollector:
         for future_request in futures.as_completed(future_requests):
             builds.update(future_request.result())
 
-        logging.debug("Build status collected: %s", builds)
+        logger.debug("Build status collected: %s", builds)
         return builds
 
     def collect_job(self, job_name):
@@ -91,13 +93,13 @@ class JenkinsCollector:
         except HTTPError as e:
             # ignore...
             if(e.code == 404): # not found - its OK lets not crash
-                logging.warning("No build found for job %s" % job_name)
+                logger.warning("No build found for job %s" % job_name)
                 return (job_name, "not_found", None)
             else:
-                logging.exception("HTTP Error requesting status for job %s" % job_name)
+                logger.exception("HTTP Error requesting status for job %s" % job_name)
                 return (job_name, "error", None)
         except URLError as e:
-            logging.exception("URL Error requesting status for job %s" % job_name)
+            logger.exception("URL Error requesting status for job %s" % job_name)
             return (job_name, "error", None)
 
 
@@ -107,7 +109,7 @@ class JenkinsCollector:
         build["result"] = self.__convert_store_fill_job_result__(job_name, jenkins_build_result["result"])
         build["number"] = jenkins_build_result["number"]
         build["timestamp"] = datetime.fromtimestamp(jenkins_build_result["timestamp"]/1000.0)
-        logging.debug("Converted Build result", build)
+        logger.debug("Converted Build result", build)
         return build
 
     def __convert_store_fill_job_result__(self, job_name, jenkins_result):
@@ -147,7 +149,7 @@ class JenkinsCollector:
             return self.jenkins.view(view_name)
         except:
             # ignore...
-            logging.exception("Error occured requesting info for view %s" % view_name)
+            logger.exception("Error occured requesting info for view %s" % view_name)
 
 class JenkinsClient():
     """ copied and simplifed from jenkinsapi by Willow Garage in order to ensure singe requests for latest build
