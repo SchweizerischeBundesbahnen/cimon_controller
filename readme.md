@@ -16,7 +16,7 @@ The setup of the device, start/stop scripts, autoupdate and so on are available 
 - For Energenie Output: The sispmctl command line application build and in path and the energenie device accessible as user
 
 ## Usage
-Provided your python3 command is 3.4
+Provided your python3 command is 3.2 or higher
 
     python3 cimon.py
  
@@ -25,7 +25,7 @@ now the cimon main method ("masterboxcontrolprogram") should run in a loop until
 ## Configuration
 All Configuration is done via yaml the file "cimon.yaml". This file has to be located in the directory "cimon" in the user home (~/cimon/cimon.yaml). You can specify another location (including the file name) using the "-c" or "-config" parameter.
 
-See controller/templates/cimon.yaml for the format and entries of the configuration file
+See controller/templates/cimon.yaml for the format and entries of the configuration file. You can use encrypted values for passwords if you provide a simple aes key file.
 
 It is recommended to configure the jenkins configurator via views in oder to manage the build ids on the jenkins server.
 
