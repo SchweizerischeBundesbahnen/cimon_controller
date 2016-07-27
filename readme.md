@@ -25,13 +25,19 @@ now the cimon main method ("masterboxcontrolprogram") should run in a loop until
 ## Configuration
 All Configuration is done via yaml the file "cimon.yaml". This file has to be located in the directory "cimon" in the user home (~/cimon/cimon.yaml). You can specify another location (including the file name) using the "-c" or "-config" parameter.
 
-See controller/templates/cimon.yaml for the format and entries of the configuration file. You can use encrypted values for passwords if you provide a simple aes key file.
+See controller/templates/cimon.yaml for the format and entries of the configuration file. You can use encrypted values for passwords if you provide a simple aes key file, see Key.
 
 It is recommended to configure the jenkins configurator via views in oder to manage the build ids on the jenkins server.
 
 ### Key
-In order to use encrypted passwords within the configuration you need to provide a 32 bit AES key (a binary file with 32 bit data) called key.bin in the cimon directory within the user home (~/cimon/key.bin). You can specify another location location (including the file name) using the "-k" or "--key" parameter.
+In order to use encrypted passwords within the configuration you need to provide a 32 bit AES key (a binary file with 32 bit data) called key.bin in the cimon directory within the user home (~/cimon/key.bin). You can specify another location location (including the file name) using the "-k" or "--key" parameter. The decryption uses AES CTR via PyAES, see https://github.com/ricmoo/pyaes.
 
+With the help of configutil.py you can encrypt passwords, decrypt passwords and generate an new keyfile (will not overwrite an existing file):
+
+    python3 configutil.py [--key <keyfile>] --encrypt <plaintext>
+    python3 configutil.py [--key <keyfile>] --decrypt <encrypted text>
+    python3 configutil.py [--key <keyfile>] --generate
+ 
 ## Extend
 The cimon is designed for you to add your own collector and output easily. Use the templates in templates directory or the existing collector and outputs as a starting point.
 

@@ -166,7 +166,9 @@ def configure_from_dict(configuration, key=None):
 
 def __configure_logging__(configuration):
     try:
-        logging.config.dictConfig(configuration["logging"])
+        logging_cfg = configuration["logging"]
+        logging_cfg["disable_existing_loggers"] = False # required in order to configure loggers at module level
+        logging.config.dictConfig(logging_cfg)
     except: # default config: log all to console
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger.exception("Configuration of logging failed, using default configuration")
