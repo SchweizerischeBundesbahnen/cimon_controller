@@ -1,0 +1,27 @@
+# rename to cimon.yaml if you want to test your output devices without input from jenkins
+pollingIntervalSec: 10
+operatingDays: 0-6
+operatingHours: 0-23
+collector:
+  - implementation: rotatingcollector
+output:
+  - implementation: clewareampeloutput
+    # device:
+  - implementation: energenieoutput
+    # deviceNr:
+
+logging:
+  version: 1
+  formatters:
+    simpleFormater:
+      format: '%(asctime)s %(levelname)s %(message)s'
+      datefmt: '%Y/%m/%d %H:%M:%S'
+  handlers:
+    console:
+      class: logging.StreamHandler
+      formatter: simpleFormater
+      level: DEBUG
+      stream: ext://sys.stderr
+  root:
+      level: DEBUG
+      handlers: [console]
