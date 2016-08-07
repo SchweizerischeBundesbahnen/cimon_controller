@@ -127,18 +127,21 @@ class Cimon():
         # may roll over - now use the first day/hour in the list
         return operating_days_or_hours[0] if operating_days_or_hours else current_day_or_hour
 
-def configure_from_yaml_file(file, keypath=None):
-    print("Configuring cimon from yaml file: " + file)
+def read_yaml_file(file):
     # read the yaml config file
     with open(file, "r") as f:
         cfg = yaml.load(f)
+    return cfg
+
+def configure_from_yaml_file(file, keypath=None, dry_run=False):
+    print("Configuring cimon from yaml file: " + file)
     # read the secret key on the device
     if keypath and os.path.isfile(keypath):
         with open(keypath, "rb") as k:
             key = k.read()
     else:
         key = None
-    return configure_from_dict(cfg, key)
+    return configure_from_dict(read_yaml_file(file), key)
 
 def configure_from_dict(configuration, key=None):
     try:
@@ -166,9 +169,12 @@ def configure_from_dict(configuration, key=None):
 
 def __configure_logging__(configuration):
     try:
-        logging_cfg = configuration["logging"]
-        logging_cfg["disable_existing_loggers"] = False # required in order to configure loggers at module level
-        logging.config.dictConfig(logging_cfg)
+        if "logging" in configuration:
+            logging_cfg = configuration["logging"]
+            logging_cfg["disable_existing_loggers"] = False # required in order to configure loggers at module level
+            logging.config.dictConfig(logging_cfg)
+        else:
+            logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
     except: # default config: log all to console
         logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
         logger.exception("Configuration of logging failed, using default configuration")
@@ -219,6 +225,11 @@ def __start__(masterboxcontrolprogram):
     # now start
     masterboxcontrolprogram.start()
 
+def __validate_config__(configfilepath):
+    cfg = read_yaml_file(configfilepath)
+    cfg.pop("logging", None) # do not use logging
+    configure_from_dict(cfg)
+
 if  __name__ =='__main__':
     """the actual start of the cimon masterboxcontrolprogram"""
     # config file location may be provided via command line arg
@@ -230,10 +241,8 @@ if  __name__ =='__main__':
     # read yaml config file (mandatory)
     configfilepath = args.config or find_config_file_path("cimon.yaml")
     keypath = args.key or find_config_file_path("key.bin", True)
-    masterboxcontrolprogram = configure_from_yaml_file(configfilepath, keypath)
     if args.validate:
+        __validate_config__(configfilepath)
         sys.exit(0) # just validate the config, do not start. If an exception was raised it will exit with 1
     else:
-        __start__(masterboxcontrolprogram)
-
-
+        __start__(configure_from_yaml_file(configfilepath, keypath))

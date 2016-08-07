@@ -116,6 +116,17 @@ class TestClewarecontrolClewareAmpel(TestCase):
         self.ampel.wait_for_display()
         self.ampel.__call_clewarecontrol__.assert_has_calls([call((self.red,False), (self.yellow,False), (self.green,True))])
 
+    def test_wait_for_display_flash(self):
+        self.ampel = self.create_cleware_ampel()
+        self.ampel.display(yellow=True, flash=True)
+        self.ampel.wait_for_display()
+
+    def test_wait_for_display_alternate_flash(self):
+        self.ampel = self.create_cleware_ampel()
+        for i in range(0,5):
+            self.ampel.display(yellow=True, flash=(i%2 == 0))
+            self.ampel.wait_for_display()
+
     def create_cleware_ampel(self, flash_interval_sec=0.2, retval=True, absoulte_every_sec=42):
         ampel = ClewarecontrolClewareAmpel(flash_interval_sec=flash_interval_sec, absoulte_every_sec=absoulte_every_sec)
         ampel.__call_clewarecontrol__ = MagicMock(spec=(""), return_value=retval)

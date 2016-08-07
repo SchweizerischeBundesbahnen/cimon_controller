@@ -61,7 +61,7 @@ class ClewarecontrolClewareAmpel():
         end = datetime.now() + timedelta(seconds=timeout)
         with self.condition:
             while datetime.now() < end and self.current_display != self.to_display:
-                self.condition.wait(timeout=max((datetime.now() - end).total_seconds(), 0.01)) # wait for at least 10 milliseonds to release lock
+                self.condition.wait(timeout=max((end - datetime.now()).total_seconds(), 0.01)) # wait for at least 10 milliseonds to release lock
 
     def stop(self):
         with self.condition:
@@ -113,7 +113,7 @@ class ClewarecontrolClewareAmpel():
             logger.debug("Flash off")
             self.__output_to_cleware__(red=False, yellow=False, green=False)
         else:
-            logger.debug("Flash on: %s", str(locals().copy().pop("self")))
+            logger.debug("Flash on: %s", self.to_display)
             self.__output_to_cleware__(*self.to_display)
         self.updated = False
         # if currently off (flash state True as it is the previous state) then show for 1/5, else if on for 4/5 of the time
@@ -130,6 +130,7 @@ class ClewarecontrolClewareAmpel():
             switches = [(light, on) for (light, on, current) in ((self.red_light, red, self.current_display[0]),
                                                                  (self.yellow_light, yellow, self.current_display[1]),
                                                                  (self.green_light, green, self.current_display[2])) if on != current]
+            logger.debug("Relative output to cleware ampel")
             if self.__call_clewarecontrol__(*switches):
                 self.current_display = (red, yellow, green)
         else:

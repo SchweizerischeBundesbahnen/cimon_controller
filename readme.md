@@ -9,6 +9,10 @@ The scripts are written in Python 3.4.
 
 The setup of the device, start/stop scripts, autoupdate and so on are available within the https://github.com/SchweizerischeBundesbahnen/cimon_controller repository.
 
+## Architecture
+
+![CIMON Architecture see cimon.vsd and cimon.png](cimon.png "CIMON Architecture")
+
 ## Prerequisites
 - Python 3.4
 - The yaml module has to be installed http://pyyaml.org/wiki/PyYAML
