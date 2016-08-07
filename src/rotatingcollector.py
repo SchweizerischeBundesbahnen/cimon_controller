@@ -1,6 +1,10 @@
 __author__ = 'florianseidl'
 
+import logging
+
 # for manual test purposes only, cycle through predefined output values
+
+logger = logging.getLogger(__name__)
 
 def create(configuration, key=None):
     return RotatingBuildCollector()
@@ -26,9 +30,10 @@ class RotatingBuildCollector():
     last_status = -1
 
     def collect(self):
-        self.last_status += 1;
+        self.last_status += 1
         if self.last_status >= len(self.status):
             self.last_status = 0 # rotate
+        logging.info("Imaginary build result: " + str(self.status[self.last_status]))
         return {"imaginary.build.job" : self.status[self.last_status]}
 
 if  __name__ =='__main__':
