@@ -133,9 +133,9 @@ class TestJenkinsCollector(TestCase):
         build = self.do_collect_views(9, view_name=self.view_name_2)
         self.assertEquals(5, len([k for (k, v) in build.items() if "result" in v and v["result"] == "success"]))
 
-    def test_collect_views_count_other(self):
+    def test_collect_views_count_disabled(self):
         build = self.do_collect_views(10, view_name=self.view_name_3)
-        self.assertEquals(1, len([k for (k, v) in build.items() if "result" in v and v["result"] == "other"]))
+        self.assertEquals(1, len([k for (k, v) in build.items() if v["request_status"] == "not_found"]))
 
     def test_collect_views_count_success_3(self):
         build = self.do_collect_views(10, view_name=self.view_name_3)

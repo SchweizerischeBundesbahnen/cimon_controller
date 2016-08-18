@@ -89,7 +89,7 @@ class SamlAuthenticationHandler():
 
     def __renew_saml_cookie__(self):
         # looks as if we have to aquire a (new) SAML Token....
-        logger.debug("Requesting new SAML Cookie from %s...", self.login_http_client)
+        logger.debug("Requesting new SAML Cookie from %s...", self.login_http_client.base_url)
         response = self.login_http_client.open()
         saml_cookie = response.getheader("Set-Cookie")
         if saml_cookie:
