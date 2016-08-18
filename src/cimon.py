@@ -83,6 +83,7 @@ class Cimon():
         if self.is_operating(datetime.now()):
             self.collect_and_output()
         else:
+            logging.info("Outside operating hours, switching off and waiting for operating hours")
             self.close() # reset all output before waiting
             return self.sec_to_next_operating(datetime.now())
 

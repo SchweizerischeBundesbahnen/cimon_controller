@@ -50,8 +50,7 @@ class JenkinsCollector:
     # extract result and building state from the colors in the view
     colors_to_result = {"red" : "failure",
                         "yellow" : "unstable",
-                        "blue" : "success",
-                        "disabled" : "other"}
+                        "blue" : "success"}
 
     def __init__(self, base_url, username = None, password = None, job_names =(), view_names = (), max_parallel_requests=default_max_parallel_requests, saml_login_url=None, verify_ssl=True):
         self.jenkins = JenkinsClient(http_client=create_http_client(base_url=base_url,
@@ -132,7 +131,10 @@ class JenkinsCollector:
         for job in view["jobs"]:
             if "color" in job:
                 color_status_building = job["color"].split("_") if job["color"] else (None,)
-                if color_status_building[0] in self.colors_to_result:
+
+                if color_status_building[0] == "disabled":
+                    builds[job["name"]] = {"request_status" : "not_found"}
+                elif color_status_building[0] in self.colors_to_result:
                     builds[job["name"]] = {"request_status" : "ok",
                                            "result" : self.colors_to_result[color_status_building[0]],
                                            "building" : len(color_status_building) > 1 and color_status_building[1] == "anime"}

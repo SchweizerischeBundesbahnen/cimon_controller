@@ -23,14 +23,14 @@ def decrypt(encrypted, key):
         if not key:
             raise Exception("No key given to decrypt password")
         aes = pyaes.AESModeOfOperationCTR(key)
-        return aes.decrypt(base64.b64decode(encrypted)).decode("utf-8")
+        return (aes.decrypt(base64.b64decode(encrypted))).decode("utf-8")
 
 def encrypt(plaintext, key):
     if plaintext:
         if not key:
             raise Exception("No key given to encrypt password")
         aes = pyaes.AESModeOfOperationCTR(key)
-        return base64.b64encode(aes.encrypt(plaintext)).decode("utf-8")
+        return (base64.b64encode(aes.encrypt(plaintext))).decode("utf-8")
 
 def generateKey():
     return os.urandom(32)
