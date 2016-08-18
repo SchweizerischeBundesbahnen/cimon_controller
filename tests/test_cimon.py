@@ -259,47 +259,47 @@ class CimonConfigurationTests(TestCase):
 
     def test_configure_unkonwn_collector(self):
         with self.assertRaises(ImportError):
-            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "gibtsgarnicht"}], "output" : [{"implementation" : "consoleoutput"}]})
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "gibtsgarnicht"}], "output" : [{"implementation" : "consoleoutput"}]}, None)
 
     def test_configure_unkonwn_output(self):
         with self.assertRaises(ImportError):
-            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "gibtsgarnicht"}]})
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "gibtsgarnicht"}]}, None)
 
     def test_configure_no_polling_interval(self):
         with self.assertRaises(KeyError):
-            cimon.configure_from_dict({ "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "consoleoutput"}] })
+            cimon.configure_from_dict({ "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "consoleoutput"}] }, None)
 
     def test_configure_no_collectors(self):
         with self.assertRaises(KeyError):
-            cimon.configure_from_dict({"pollingIntervalSec" : 42, "output" : [{"implementation" : "consoleoutput"}]})
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "output" : [{"implementation" : "consoleoutput"}]}, None)
 
     def test_configure_no_output(self):
         with self.assertRaises(KeyError):
-            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "rotatingcollector"}]})
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "rotatingcollector"}]}, None)
 
     def test_configure_empty_collector_list(self):
         with self.assertRaises(ValueError):
-            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [], "output" : [{"implementation" : "rotatingcollector"}]})
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [], "output" : [{"implementation" : "rotatingcollector"}]}, None)
 
     def test_configure_empty_output_list(self):
         with self.assertRaises(ValueError):
-            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "rotatingcollector"}], "output" : []})
+            cimon.configure_from_dict({"pollingIntervalSec" : 42, "collector" : [{"implementation" : "rotatingcollector"}], "output" : []}, None)
 
     def test_configure_collector_in_output(self):
         with self.assertRaises(AttributeError):
-            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "rotatingcollector"}] })
+            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "rotatingcollector"}] }, None)
 
     def test_configure_output_in_collector(self):
         with self.assertRaises(AttributeError):
-            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "consoleoutput"}], "output" : [{"implementation" : "consoleoutput"}] })
+            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "consoleoutput"}], "output" : [{"implementation" : "consoleoutput"}] }, None)
 
     def test_configure_other_module_in_collector(self):
         with self.assertRaises(AttributeError):
-            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "configutil"}], "output" : [{"implementation" : "consoleoutput"}] })
+            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "configutil"}], "output" : [{"implementation" : "consoleoutput"}] }, None)
 
     def test_configure_other_module_in_output(self):
         with self.assertRaises(AttributeError):
-            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "configutil"}] })
+            cimon.configure_from_dict({ "pollingIntervalSec" : 42,  "collector" : [{"implementation" : "rotatingcollector"}], "output" : [{"implementation" : "configutil"}] }, None)
 
 if __name__ == '__main__':
     main()

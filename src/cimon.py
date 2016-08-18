@@ -134,17 +134,17 @@ def read_yaml_file(file):
         cfg = yaml.load(f)
     return cfg
 
-def configure_from_yaml_file(file, keypath=None, dry_run=False):
-    print("Configuring cimon from yaml file: " + file)
+def read_key_file(keypath):
     # read the secret key on the device
     if keypath and os.path.isfile(keypath):
         with open(keypath, "rb") as k:
-            key = k.read()
-    else:
-        key = None
-    return configure_from_dict(read_yaml_file(file), key)
+            return k.read()
 
-def configure_from_dict(configuration, key=None):
+def configure_from_yaml_file(file, keypath=None, dry_run=False):
+    print("Configuring cimon from yaml file: " + file)
+    return configure_from_dict(read_yaml_file(file), read_key_file(keypath))
+
+def configure_from_dict(configuration, key):
     try:
         __configure_logging__(configuration)
         polling_interval_sec = int(configuration["pollingIntervalSec"])
@@ -226,10 +226,10 @@ def __start__(masterboxcontrolprogram):
     # now start
     masterboxcontrolprogram.start()
 
-def __validate_config__(configfilepath):
+def __validate_config__(configfilepath, keypath):
     cfg = read_yaml_file(configfilepath)
     cfg.pop("logging", None) # do not use logging
-    configure_from_dict(cfg)
+    configure_from_dict(cfg, read_key_file(keypath))
 
 if  __name__ =='__main__':
     """the actual start of the cimon masterboxcontrolprogram"""
@@ -243,7 +243,7 @@ if  __name__ =='__main__':
     configfilepath = args.config or find_config_file_path("cimon.yaml")
     keypath = args.key or find_config_file_path("key.bin", True)
     if args.validate:
-        __validate_config__(configfilepath)
+        __validate_config__(configfilepath, keypath)
         sys.exit(0) # just validate the config, do not start. If an exception was raised it will exit with 1
     else:
         __start__(configure_from_yaml_file(configfilepath, keypath))
