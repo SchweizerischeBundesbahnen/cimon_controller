@@ -22,14 +22,15 @@ def create(configuration, aesKey=None):
     return ClewareBuildAmpel(device=configuration.get("device", None),
                              signal_error_threshold=configuration.get("signalErrorThreshold", default_signal_error_threshold),
                              flash_interval_sec=configuration.get("flashIntervalSec", default_flash_interval_sec),
-                             absoulte_every_sec=configuration.get("absoulteEverySec", default_absoulte_every_sec))
+                             absoulte_every_sec=configuration.get("absoulteEverySec", default_absoulte_every_sec),
+                             build_filter_pattern=configuration.get("buildFilterPattern", None))
 
 
 class ClewareBuildAmpel(AbstractBuildAmpel):
     """control the cleware ampel according to build status"""
 
-    def __init__(self, device=None, signal_error_threshold=default_signal_error_threshold, flash_interval_sec=default_flash_interval_sec, absoulte_every_sec=default_absoulte_every_sec):
-        super().__init__(signal_error_threshold=signal_error_threshold)
+    def __init__(self, device=None, signal_error_threshold=default_signal_error_threshold, flash_interval_sec=default_flash_interval_sec, absoulte_every_sec=default_absoulte_every_sec, build_filter_pattern=None):
+        super().__init__(signal_error_threshold=signal_error_threshold, build_filter_pattern=build_filter_pattern)
         self.cleware_ampel=ClewarecontrolClewareAmpel(device=device, flash_interval_sec=flash_interval_sec, absoulte_every_sec=absoulte_every_sec)
 
     def signal(self, red, yellow, green, flash=False):

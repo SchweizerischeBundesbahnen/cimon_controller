@@ -5,12 +5,12 @@ from output import AbstractBuildAmpel
 from datetime import datetime
 
 def create(configuration, key=None):
-    return ConsoleOutput()
+    return ConsoleOutput(build_filter_pattern=configuration.get("buildFilterPattern", None))
 
 class ConsoleOutput(AbstractBuildAmpel):
     """Mock for manual testing"""
-    def __init__(self):
-        super(ConsoleOutput, self).__init__()
+    def __init__(self, build_filter_pattern=None):
+        super(ConsoleOutput, self).__init__(build_filter_pattern=build_filter_pattern)
         self.__current_signal__ = None
 
     def signal(self, red, yellow, green, flash=False):

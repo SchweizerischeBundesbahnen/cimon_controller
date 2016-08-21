@@ -22,14 +22,15 @@ logger = logging.getLogger(__name__)
 def create(configuration, aesKey=None):
     return EnergenieBuildAmpel(device_nr=configuration.get("deviceNr", None),
                                signal_error_threshold=configuration.get("signalErrorThreshold", default_signal_error_threshold),
-                               repeat_every=configuration.get("repeatEvery", default_repeat_every))
+                               repeat_every=configuration.get("repeatEvery", default_repeat_every),
+                               build_filter_pattern=configuration.get("buildFilterPattern", None))
 
 
 class EnergenieBuildAmpel(AbstractBuildAmpel):
     """ control energenie according to build status """
 
-    def __init__(self, device_nr=None, signal_error_threshold=default_signal_error_threshold, repeat_every=default_repeat_every):
-        super(EnergenieBuildAmpel, self).__init__(signal_error_threshold=signal_error_threshold)
+    def __init__(self, device_nr=None, signal_error_threshold=default_signal_error_threshold, repeat_every=default_repeat_every, build_filter_pattern=None):
+        super(EnergenieBuildAmpel, self).__init__(signal_error_threshold=signal_error_threshold, build_filter_pattern=build_filter_pattern)
         self.energenie = Energenie(device_nr=device_nr, repeat_every=repeat_every)
 
     def signal(self, red, yellow, green, flash=False): # igonre flash, this feature is not supported
