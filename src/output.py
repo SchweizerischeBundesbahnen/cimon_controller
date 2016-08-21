@@ -4,6 +4,7 @@ __author__ = 'florianseidl'
 
 from time import sleep
 import logging
+import re
 
 default_signal_error_threshold=3
 
@@ -56,15 +57,31 @@ def is_building(status):
             return True
     return False
 
+class BuildFilter():
+    def __init__(self, pattern=None):
+        self.filter_pattern = re.compile(pattern) if pattern else None
+
+    def filter(self, status):
+        if "build" in status and self.filter_pattern:
+            status_filtered = status.copy() # shallow copy
+            status_filtered["build"] =  {k: v for k, v in status["build"].items() if self.filter_pattern.match(k)}
+            return status_filtered
+        else:
+            return status
+
 # Abstract base classes for outputs
 class AbstractBuildOutput():
     """ Output for builds with error handling. Derived methods have to implement signal and on_status and set the last_signal after signaling non-error state """
-    def __init__(self, signal_error_threshold=default_signal_error_threshold):
+    def __init__(self, signal_error_threshold=default_signal_error_threshold, build_filter_pattern=None):
         self.signal_error_threshold=signal_error_threshold
+        self.build_filter = BuildFilter(build_filter_pattern)
         self.error_count=0
         self.last_status=None
 
     def on_update(self, status):
+        self.on_update_filtered(self.build_filter.filter(status))
+
+    def on_update_filtered(self, status):
         if "build" not in status:
             logger.debug("No build status found in given status, ignoring %s", status)
         elif has_request_status(status, "error"):
