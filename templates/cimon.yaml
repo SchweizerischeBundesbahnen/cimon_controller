@@ -46,6 +46,8 @@ output:
     # flashIntervalSec=1.5
     # output all light states every given seconds. Put 0 to enforce absolute output every time. Default is 300 seconds (5 minutes)
     # absoulteEverySec=300
+    # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
+    # buildFilterPattern=".*"
   # Output to the Energenie Socket (Steckdosenleiste). Usually no configuration required.
   # remove if you dont use Energenie.
   - implementation: energenieoutput
@@ -56,6 +58,8 @@ output:
     # signalErrorThreshold: 3
     # repeat the output every n times even if it is unchanged. Default is every 15 times.
     # repeatEvery=15
+    # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
+    # buildFilterPattern=".*"
 
 # logging configuration, will be passed on to the python loggin dictionary config 1:1.
 # will log from INFO to a file in /var/log/cimon/cimon.log and from CRITICAL to stderr
