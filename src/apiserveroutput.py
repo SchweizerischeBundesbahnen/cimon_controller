@@ -11,6 +11,7 @@ import sys
 from threading import Thread, RLock
 from time import sleep
 from datetime import datetime
+from output import BuildFilter
 
 # Template for an output. For ampel type output with 3 or less lights or signals, use myampeloutput template instead.
 # copy and add your functionality
@@ -87,12 +88,14 @@ class ApiServer(BaseHTTPRequestHandler):
             if match and len(match.groups()) > 0:
                 job = match.group(1)
                 status = get_shared_status()
-                if job in status["build"] and status["build"][job]["request_status"] == "ok":
+                if "build" in status and job in status["build"] and status["build"][job]["request_status"] == "ok":
                     self.send_jenkins_response_to_last_build_request(job, status)
-                elif job in status["build"]:
+                elif "build" in status and job in status["build"]:
                     self.send_not_found("Request status %s" % status["build"][job]["request_status"])
-                else:
+                elif "build" in status:
                     self.send_not_found('Unkonwn build job "%s"' % job)
+                else:
+                    self.send_not_found("No build status available at all (maybe this is cimon does not collect build status?)")
             else:
                 self.send_not_found('Path "%s" is not handled.' % self.path)
         except Exception:
@@ -122,6 +125,8 @@ class ApiServer(BaseHTTPRequestHandler):
             jenkins_response["number"] = build_result["number"]
         if "timestamp" in build_result and build_result["timestamp"]:
             jenkins_response["timestamp"] = build_result["timestamp"].timestamp() * 1000
+        if "culprits" in build_result:
+            jenkins_response["culprits"] = [{"fullName" : culprit} for culprit in build_result["culprits"]]
         return jenkins_response
 
 if  __name__ =='__main__':

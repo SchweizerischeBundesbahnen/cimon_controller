@@ -78,6 +78,10 @@ class TestJenkinsCollector(TestCase):
         status = self.do_collect_jobs(self.job_name_success)
         self.assertEqual(datetime(2016, 3, 19, 23, 16, 22, 182000), status[self.job_name_success]["timestamp"])
 
+    def test_culprits(self):
+        status = self.do_collect_jobs(self.job_name_failed)
+        self.assertEqual(["Diacon Gilles"], status[self.job_name_failed]["culprits"])
+
     def test_build_result_failed(self):
         status = self.do_collect_jobs(self.job_name_failed)
         self.assertEqual("failure", status[self.job_name_failed]["result"])

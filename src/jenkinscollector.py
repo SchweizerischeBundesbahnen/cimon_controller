@@ -108,6 +108,7 @@ class JenkinsCollector:
         build["result"] = self.__convert_store_fill_job_result__(job_name, jenkins_build_result["result"])
         build["number"] = jenkins_build_result["number"]
         build["timestamp"] = datetime.fromtimestamp(jenkins_build_result["timestamp"]/1000.0)
+        build["culprits"] = [culprit["fullName"] for culprit in jenkins_build_result["culprits"]]
         logger.debug("Converted Build result", build)
         return build
 
