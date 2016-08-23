@@ -8,6 +8,7 @@ from unittest import TestCase, main
 from unittest.mock import MagicMock, Mock
 import os
 from datetime import datetime
+import re
 
 class TestJenkinsClient(TestCase):
     json_str = '{ "foo": "bar" }'
@@ -36,12 +37,17 @@ class TestJenkinsCollector(TestCase):
     view_name_1 = "mvp/view/mct-new/view/mct-develop/view/continuous"
     view_name_2 = "kd/view/esta.integrate"
     view_name_3 = "pz/view/tip/view/tip-all"
-    view_name_building = "kd_view_sid"
+    view_name_nested = "mvp/view/zvs-drittgeschaeft"
+    view_name_nested_loop = "mvp/view/zvs-drittgeschaeft-fake-broken-with-loop"
+    view_name_building = "kd/view/sid"
     url = "https://ci.sbb.ch"
 
     def read(self, file_name):
         with open("%s/testdata/%s" % (os.path.dirname(__file__), file_name)) as f:
             return f.read()
+
+    def to_filename(self, view_name):
+        return view_name.replace("/", "__")
 
     def do_collect_jobs(self, job_name):
         col = JenkinsCollector(self.url, job_names= (job_name, ))
@@ -102,11 +108,11 @@ class TestJenkinsCollector(TestCase):
     def do_collect_views(self, expected_nr_jobs, view_name, error=None):
         col = JenkinsCollector(self.url, view_names = (view_name, ))
         col.jenkins.http_client.open_and_read = MagicMock(spec=(""),
-                                                return_value= self.read(view_name.replace("/", "__")) if not error else None,
+                                                return_value= self.read(self.to_filename(view_name)) if not error else None,
                                                 side_effect = error)
-        build = col.collect()
-        self.assertEqual(len(build), expected_nr_jobs)
-        return build
+        builds = col.collect()
+        self.assertEqual(len(builds), expected_nr_jobs)
+        return builds
 
     def test_collect_views_count(self):
         self.do_collect_views(66, view_name=self.view_name_1)
@@ -155,7 +161,7 @@ class TestJenkinsCollector(TestCase):
 
     def test_build_request_status_http_error(self):
         status = self.do_collect_views(1, "foo", HTTPError("", 500, "kaputt", None, None))
-        self.assertEqual(status["all"]["request_status"], "error")
+        self.assertEqual(status["foo"]["request_status"], "error")
 
     def test_build_result_not_building(self):
         status = self.do_collect_jobs(self.job_name_success)
@@ -202,6 +208,24 @@ class TestJenkinsCollector(TestCase):
         status = col.collect()
         self.assertEquals("failure", status[self.job_name_building]["result"])
         self.assertFalse(status[self.job_name_building]["building"])
+
+    def test_nested_view(self):
+        col = JenkinsCollector(self.url, view_names = (self.view_name_nested, ))
+        col.jenkins.http_client.open_and_read = self.mock_open_and_read_for_nested_view
+        build = col.collect()
+        self.assertEqual(len(build), 124)
+
+    def test_nested_view_loop(self):
+        col = JenkinsCollector(self.url, view_names = (self.view_name_nested_loop, ))
+        col.jenkins.http_client.open_and_read = self.mock_open_and_read_for_nested_view
+        build = col.collect()
+        self.assertEqual(len(build), 124)
+
+
+    def mock_open_and_read_for_nested_view(self, request_path):
+        match = re.match("/view/(.*)/api/json", request_path)
+        view_name = match.group(1).strip("/")
+        return self.read("nested_view/" + self.to_filename(view_name))
 
 if __name__ == '__main__':
     main()

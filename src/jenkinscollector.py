@@ -120,11 +120,26 @@ class JenkinsCollector:
             return self.last_results[job_name] if job_name in self.last_results else "other"
 
     def collect_view(self, view_name):
+        # separate method because default parameter does not work easily with future
+        return self.__collect_view_recursive__(view_name, set())
+
+    def __collect_view_recursive__(self, view_name, allready_visited):
+        if view_name in allready_visited: # guard against infinite loops
+            return {}
+        allready_visited.add(view_name)
+
         view = self.__view__(view_name)
         if view:
-            return self.__extract_job__status__(view)
+            # add the builds to the existing ones (from recursion)
+            builds = self.__extract_job__status__(view)
+            if "views" in view:
+                nested_views = self.__extract_nested_view_names__(view)
+                for nested_view in nested_views:
+                    # recurse for all nested views
+                    builds.update(self.__collect_view_recursive__(nested_view, allready_visited))
+            return builds
         else:
-            return { "all" : {"request_status" : "error"} }
+            return{ view_name : {"request_status" : "error"} }
 
     def __extract_job__status__(self, view):
         builds = {}
@@ -145,6 +160,18 @@ class JenkinsCollector:
             else:
                 builds[job["name"]] = {"request_status" : "not_found"}
         return builds
+
+    def __extract_nested_view_names__(self, view):
+        views = []
+        for v in view["views"]:
+            #"url":"https://ci.sbb.ch/view/mvp/view/zvs-drittgeschaeft/view/vermittler-westernunion/
+            url = v["url"] # extract name with path from url
+            name_with_path = url.partition("view")[2]
+            if name_with_path.endswith("/"):
+                name_with_path = name_with_path[:-1]
+            if name_with_path:
+                views.append(name_with_path)
+        return set(views)
 
     def __view__(self, view_name):
         try:
