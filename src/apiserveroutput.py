@@ -78,47 +78,58 @@ class ApiServerOutput():
     def close(self):
         stop_http_server()
 
-class ApiServer(BaseHTTPRequestHandler):
+class ApiServer():
+    """ A delegate to the delegate (HTTPRequestHander) as is easy to test """
 
-    job_request_pattern = re.compile("/job/([\w\.]*)/lastBuild/api/json.*")
+    job_request_pattern = re.compile("/job/([\w\.-]*)/lastBuild/api/json.*")
+    view_request_pattern = re.compile("/view/([\w\.-\/]*)/api/json.*")
 
-    def do_GET(self):
+    result_to_color = {"failure" : "red",
+                        "unstable" : "yellow",
+                        "success" : "blue"}
+
+
+    def handle_get(self, path):
         try:
-            match = self.job_request_pattern.match(self.path)
-            if match and len(match.groups()) > 0:
-                job = match.group(1)
-                status = get_shared_status()
-                if "build" in status and job in status["build"] and status["build"][job]["request_status"] == "ok":
-                    self.send_jenkins_response_to_last_build_request(job, status)
-                elif "build" in status and job in status["build"]:
-                    self.send_not_found("Request status %s" % status["build"][job]["request_status"])
-                elif "build" in status:
-                    self.send_not_found('Unkonwn build job "%s"' % job)
+            status = get_shared_status()
+            if "build" in status:
+                if "all" in status["build"] and status["build"]["all"]["request_status"] == "error":
+                   return (500, "Error requesting any job")
                 else:
-                    self.send_not_found("No build status available at all (maybe this is cimon does not collect build status?)")
+                    job_match = self.job_request_pattern.match(path)
+                    if job_match and len(job_match.groups()) > 0:
+                        return self.handle_job(job=job_match.group(1), build_status=status["build"])
+                    else:
+                        view_match = self.view_request_pattern.match(path)
+                        if view_match and len(view_match.groups()) > 0:
+                            return self.handle_view(view=view_match.group(1), build_status=status["build"])
+                        else:
+                            return (404, 'Path "%s" is not handled.' % path)
             else:
-                self.send_not_found('Path "%s" is not handled.' % self.path)
+                return (500, "No build status available at all (maybe this is cimon does not collect build status?)")
         except Exception:
             logging.error("Error handing HTTP Request", exc_info=True)
-            self.send_error(500, str(sys.exc_info()))
-        finally:
-            self.wfile.flush()
+            return (500, str(sys.exc_info()))
 
-    def send_not_found(self, reason):
-        self.send_error(404, "Not found: %s" % reason)
+    def handle_job(self, job, build_status):
+        if job in build_status and build_status[job]["request_status"] == "ok":
+            return (200, self.__to_jenkins_job_result__(build_status[job]))
+        elif job in build_status and build_status[job]["request_status"] == "error":
+            return (500, 'Error requesting job "%s"' % job)
+        elif job in build_status and build_status[job]["request_status"] == "not_found":
+            return (404, "Request status %s" % build_status[job]["request_status"])
+        else:
+            return (404, 'Unkonwn build job "%s"' % job)
 
-    # act as if we where jenkins
-    def send_jenkins_response_to_last_build_request(self, job, status):
-        build_result = status["build"][job]
-        self.send_response(200)
-        self.send_header("Content-type","application/json")
-        self.end_headers()
-        jenkins_response = self.__to_jenkins_result__(build_result)
-        self.wfile.write(json.dumps(jenkins_response).encode("utf-8"))
+    def handle_view(self, view, build_status):
+        if view == "all":
+            return (200, self.__to_jenkins_view_result__(build_status))
+        else:
+            return (404, 'Unknown view "%s"' % view)
 
-    def __to_jenkins_result__(self, build_result):
+    def __to_jenkins_job_result__(self, build_result):
         jenkins_response = {
-            "result" : build_result["result"] if build_result["result"] else "null",
+            "result" : build_result["result"].upper() if build_result["result"] in ("success", "failure", "unstable") else None,
             "building" : build_result["building"] if "building" in build_result else False
         }
         if "number" in build_result:
@@ -128,6 +139,47 @@ class ApiServer(BaseHTTPRequestHandler):
         if "culprits" in build_result:
             jenkins_response["culprits"] = [{"fullName" : culprit} for culprit in build_result["culprits"]]
         return jenkins_response
+
+    def __to_jenkins_view_result__(self, build_status):
+        jenkins_view = {
+            "description": None,
+            "jobs" : []
+        }
+        for job in build_status:
+            jenkins_view["jobs"].append({"name" : job, "color" : self.__to_color__(build_status[job])})
+        return jenkins_view
+
+    def __to_color__(self, job_status):
+        if "result" in job_status and job_status["result"] in self.result_to_color:
+            color=self.result_to_color[job_status["result"]]
+            if "building" in job_status and job_status["building"]:
+                color += "_anime"
+            return color
+        else:
+            return "disabled"
+
+
+class ApiServerRequestHandler(BaseHTTPRequestHandler):
+    """ A shallow adapter to the Python http request handler as it is hard to test"""
+    api_server = ApiServer()
+
+    def do_GET(self):
+        try:
+            result = self.api_server.handle_get(self.path)
+            if(200 <= result[0] < 300):
+                logging.debug('Response to "%s" http status code %d: %s' % (self.path, result[0], str(result[1])))
+                self.send_ok(code=result[0], jenkins_response=result[1])
+            else: # some kind of error....
+                logging.log(logging.INFO if result[0] < 500 else logging.WARNING, 'Error requesting "%s" http status code %d: %s' % (self.path, result[0], str(result[1])))
+                self.send_error(code=result[0], message=result[1])
+        finally:
+            self.wfile.flush()
+
+    def send_ok(self, code, jenkins_response):
+        self.send_response(code)
+        self.send_header("Content-type","application/json;charset=utf-8")
+        self.end_headers()
+        json.dump(jenkins_response.encode("utf-8"), self.wfile)
 
 if  __name__ =='__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
