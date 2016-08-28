@@ -33,11 +33,23 @@ class CimonTest(TestCase):
 
     def test_run_3_collector_1_output_1_status(self):
         self.__do_run__(1, mock={"a" : { "b" : "c", "e": "f"}},
-                        other_mock=("bla", 42),
-                        another_mock="nice")
+                        other_mock={"bla" : {"x": 42 }},
+                        another_mock={"nice" : None })
+
+    def test_run_2_collector_same_type_1_output_1_status(self):
+        c = Cimon(collectors = tuple((self.__mock_collector__("mock", {"a" : { "b" : "c", "e": "f"}}), self.__mock_collector__("mock", {"x" : { "y" : "z"}}))),
+                  outputs = tuple((self.__mock_output__(),)))
+        c.run()
+        c.outputs[0].on_update.assert_called_once_with({"mock" : {"a" : { "b" : "c", "e": "f"}, "x" : { "y" : "z"} }})
+
+    def test_run_2_collector_same_type_1_output_1_status_overwrrite(self):
+        c = Cimon(collectors = tuple((self.__mock_collector__("mock", {"a" : { "b" : "c"}}), self.__mock_collector__("mock", {"a" : { "b" : "x"}}))),
+                  outputs = tuple((self.__mock_output__(),)))
+        c.run()
+        c.outputs[0].on_update.assert_called_once_with({"mock" : {"a" : { "b" : "x"} }})
 
     def test_run_1_collector_1_output_status_none(self):
-        self.__do_run__(1, mock=None)
+        self.__do_run__(1, mock={})
 
     def test_run_0_collector_1_output(self):
         self.__do_run__(1)

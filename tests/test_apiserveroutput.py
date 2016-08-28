@@ -17,8 +17,6 @@ class TestApiServerOutput(TestCase):
     job_name_failed = "mvp.mct.vermittler-orchestrierung_commons.continuous"
     job_name_unstable = "kd.esta.integrate.template.was3.it"
     job_name_building = "kd.sid.sid-library-ios.continuous"
-    view_name_1 = "mvp/view/mct-new/view/mct-develop/view/continuous"
-    view_name_2 = "kd/view/esta.integrate"
     view_name_3 = "pz/view/tip/view/tip-all"
 
     def setUp(self):
