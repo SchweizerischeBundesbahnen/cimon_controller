@@ -31,6 +31,9 @@ collector:
     views: []
     # maximum number of parallel requests to the jenkins server. Default is 7.
     # maxParallelRequest: 7
+    # the depth parameter in the api query to jenkins when querying views (depth=x). The higher the more data is sent.
+    # Default is 0, use 2 if you need timestamp and culprits from views (for instance for apiserveroutput)
+    # viewDepth: 0
 # collectors - fetching the current status to display, for instance build status
 output:
   # Output to the USB Ampel. Usually no configuration required.

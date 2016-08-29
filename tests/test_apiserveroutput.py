@@ -88,6 +88,9 @@ class TestApiServerOutput(TestCase):
     def test_request_culprits(self):
         self.do_test_query_jobs_from_api(self.job_name_failed, {"request_status" : "ok", "result" : "failure", "building" : False, "culprits" : ["Diacon Gilles"]})
 
+    def test_request_culprits(self):
+        self.do_test_query_jobs_from_api(self.job_name_failed, {"request_status" : "ok", "result" : "failure", "building" : False, "culprits" : ["Diacon Gilles"], "timestamp": datetime.fromtimestamp(1458426704.059) })
+
     def test_not_found(self):
         out, api = self.create()
         out.on_update({"build" :  { self.job_name_success : {"request_status" : "ok", "result" : "success", "building" : False} }})
