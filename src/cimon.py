@@ -119,7 +119,7 @@ class Cimon():
         else:
             # some other day - search next operating day and calculate distance to first operating hour that day
             next_operating_day = self.__find_same_or_next_day_or_hour__(self.operating_days, now.weekday() + 1)
-            distance_to_next_operating_day = next_operating_day - now.weekday() if next_operating_day >= now.weekday() else next_operating_day + 6 - now.weekday()
+            distance_to_next_operating_day = next_operating_day - now.weekday() if next_operating_day >= now.weekday() else next_operating_day + 7 - now.weekday()
             # absolute date next operating is at the next operating day
             next_operating_date = (now + timedelta(days=distance_to_next_operating_day)).date()
             next_operating = datetime.combine(next_operating_date, time(hour=self.__find_same_or_next_day_or_hour__(self.operating_hours, 0)))

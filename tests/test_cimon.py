@@ -230,22 +230,22 @@ class CimonOperatingDaysHoursTest(TestCase):
         self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), 18*60*60 - 7*60 - 42)
 
     def test_sec_to_next_operating_rollover_day(self):
-        # rollover: thursday 12:00:00, but has to wait until monday 00:00:00
+        # rollover: thursday 00:00:00, but has to wait until monday 00:00:00
         c = Cimon(operating_hours = tuple(range(0,24)),
                   operating_days = (0,))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 00, 00, 00)), 3*24*60*60)
-
-    def test_sec_to_next_operating_12_mins_secs_rollover_day(self):
-        # rollover: thursday 12:07:42, but has to wait until tuesday 00:00:00
-        c = Cimon(operating_hours = tuple(range(0,24)),
-                  operating_days = (1,))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), 4*24*60*60 - 12*60*60 - 7*60 - 42)
+        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 00, 00, 00)), 4*24*60*60)
 
     def test_sec_to_next_operating_12__6_mins_secs_rollover_day(self):
         # rollover: thursday 12:07:42, but has to wait until tuesday 00:00:00
         c = Cimon(operating_hours = tuple(range(6,22)),
                   operating_days = (1,))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), (4*24+6)*60*60 - 12*60*60 - 7*60 - 42)
+        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), 4*24*60*60 + 6*60*60 + 11*60*60 + 52*60 + 18)
+
+    def test_sec_to_next_operating_rollover_day_weekend(self):
+        # rollover: sunday 21:00:00, but has to wait until monday 06:00:00
+        c = Cimon(operating_hours = tuple(range(6,21)),
+                  operating_days = tuple(range(0,4)))
+        self.assertEquals(c.sec_to_next_operating(datetime(2016, 8, 28, 21, 00, 00)), (3+6)*60*60)
 
 class CimonConfigurationTests(TestCase):
 
