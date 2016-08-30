@@ -85,7 +85,9 @@ class Cimon():
         else:
             logging.info("Outside operating hours, switching off and waiting for operating hours")
             self.close() # reset all output before waiting
-            return self.sec_to_next_operating(datetime.now())
+            sec_to_next_operating = self.sec_to_next_operating(datetime.now())
+            logging.info("Waiting for %d seconds", sec_to_next_operating)
+            return max(sec_to_next_operating, 60) # make sure to wait at least a minute
 
     def is_operating(self, now):
         # check the current hour is configured

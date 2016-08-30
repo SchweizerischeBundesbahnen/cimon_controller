@@ -78,14 +78,14 @@ logging:
       level: CRITICAL
       stream: ext://sys.stderr
     file:
-      # Template proposes a rotating file for 10 days, one month backup
-      class: logging.handlers.TimedRotatingFileHandler
+      # Template proposes a rotating file handler by size to avoid disk overflow
+      class: logging.handlers.RotatingFileHandler
       formatter: simpleFormater
-      level: INFO
+      level: DEBUG
       filename: /var/log/cimon/cimon.log
-      when: D
-      interval: 10
-      backupCount: 3
+      # rotate at 100 MB, allow 200 MB in total
+      maxBytes: 100000000
+      backupCount: 1
   root:
       level: DEBUG
       handlers: [console, file]
