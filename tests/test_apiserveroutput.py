@@ -3,6 +3,7 @@ __author__ = 'florianseidl'
 import env
 from apiserveroutput import *
 import apiserveroutput
+from output import BuildFilter
 from unittest import TestCase
 from unittest.mock import MagicMock, Mock
 from types import SimpleNamespace
@@ -22,12 +23,13 @@ class TestApiServerOutput(TestCase):
     def setUp(self):
         apiserveroutput.server = SimpleNamespace() # pretend there is an http server to avioid starting one
         apiserveroutput.set_shared_status({})
+        apiserveroutput.views = apiserveroutput.default_views
 
     def create(self):
         return ApiServerOutput(), ApiServer()
 
     def read(self, file_name):
-        with open("%s/testdata/%s" % (os.path.dirname(__file__), file_name)) as f:
+        with open("%s/testdata/%s" % (os.path.dirname(__file__), file_name), encoding='utf-8') as f:
             return json.load(f)
 
     def do_test_query_jobs_from_api(self, job_name, values):
@@ -85,11 +87,17 @@ class TestApiServerOutput(TestCase):
     def test_request_building_true(self):
         self.do_test_query_jobs_from_api(self.job_name_building, {"request_status" : "ok", "result" : None, "building" : True})
 
-    def test_request_culprits(self):
-        self.do_test_query_jobs_from_api(self.job_name_failed, {"request_status" : "ok", "result" : "failure", "building" : False, "culprits" : ["Diacon Gilles"]})
+    def test_request_number(self):
+        self.do_test_query_jobs_from_api(self.job_name_success, {"request_status" : "ok", "result" : "success", "number" : 515})
 
     def test_request_culprits(self):
-        self.do_test_query_jobs_from_api(self.job_name_failed, {"request_status" : "ok", "result" : "failure", "building" : False, "culprits" : ["Diacon Gilles"], "timestamp": datetime.fromtimestamp(1458426704.059) })
+        self.do_test_query_jobs_from_api(self.job_name_failed, {"request_status" : "ok", "result" : "failure", "culprits" : ["Diacon Gilles"]})
+
+    def test_request_timestamp(self):
+        self.do_test_query_jobs_from_api(self.job_name_failed, {"request_status" : "ok", "result" : "failure", "timestamp": datetime.fromtimestamp(1458426704.059) })
+
+    def test_request_all(self):
+        self.do_test_query_jobs_from_api(self.job_name_failed, {"request_status" : "ok", "result" : "failure", "building" : False, "culprits" : ["Diacon Gilles"], "timestamp": datetime.fromtimestamp(1458426704.059), "number" : 554})
 
     def test_not_found(self):
         out, api = self.create()
@@ -157,3 +165,34 @@ class TestApiServerOutput(TestCase):
         out.on_update({"build" :  { "all" : {"request_status" : "error" } }})
         result = api.handle_get("/view/all/api/json?depth=0")
         self.assertEquals(result[0], 500)
+
+    def test_view_configured_2_builds(self):
+        apiserveroutput.views.update({"confiview" : BuildFilter(".*\.nightly")})
+        out, api = self.create()
+        out.on_update({"build" :  { "pz.tip.app.continuous" : {"request_status" : "ok", "result" : "success"},
+                                    "pz.tip.app.nightly" : {"request_status" : "ok", "result" : "success"} }})
+        result = api.handle_get("/view/confiview/api/json?depth=0")
+        self.assertEquals(result[0], 200)
+        self.assertEquals(1, len(result[1]["jobs"]))
+        self.assert_all_in_original_view(self.view_name_3, result[1])
+
+    def test_view_configured_2_builds_match_none(self):
+        apiserveroutput.views.update({"confiview" : BuildFilter("hotzenplotz") })
+        out, api = self.create()
+        out.on_update({"build" :  { "pz.tip.app.continuous" : {"request_status" : "ok", "result" : "success"},
+                                    "pz.tip.app.nightly" : {"request_status" : "ok", "result" : "success"} }})
+        result = api.handle_get("/view/confiview/api/json?depth=0")
+        self.assertEquals(result[0], 200)
+        self.assertEquals(0, len(result[1]["jobs"]))
+
+    def test_view_configured_2_builds_and_all(self):
+        apiserveroutput.views.update({"confiview" : BuildFilter(".*\.nightly")})
+        out, api = self.create()
+        out.on_update({"build" :  { "pz.tip.app.continuous" : {"request_status" : "ok", "result" : "success"},
+                                    "pz.tip.app.nightly" : {"request_status" : "ok", "result" : "success"} }})
+        result = api.handle_get("/view/confiview/api/json?depth=0")
+        self.assertEquals(result[0], 200)
+        self.assertEquals(1, len(result[1]["jobs"]))
+        result = api.handle_get("/view/all/api/json?depth=0")
+        self.assertEquals(result[0], 200)
+        self.assertEquals(2, len(result[1]["jobs"]))

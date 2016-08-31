@@ -148,33 +148,34 @@ class JenkinsCollector:
     def __extract_job__status__(self, view):
         builds = {}
         for job in view["jobs"]:
+            jobname = job["name"]
             if "color" in job:
                 color_status_building = job["color"].split("_") if job["color"] else (None,)
 
                 if color_status_building[0] == "disabled":
-                    builds[job["name"]] = {"request_status" : "not_found"}
+                    builds[jobname] = {"request_status" : "not_found"}
                 elif color_status_building[0] in self.colors_to_result:
-                    builds[job["name"]] = {"request_status" : "ok",
+                    builds[jobname] = {"request_status" : "ok",
                                            "result" : self.colors_to_result[color_status_building[0]],
                                            "building" : len(color_status_building) > 1 and color_status_building[1] == "anime"}
                 else:
-                    builds[job["name"]] = {"request_status" : "ok",
+                    builds[jobname] = {"request_status" : "ok",
                                            "result" : "other",
                                            "building" : False }
-            if["builds"] in job: # requires depth 2
+            if "builds" in job: # requires depth 2
                 latest_build = self.__latest_build_in_view__(job)
+                if "number" in latest_build:
+                    builds[jobname]["number"] = latest_build["number"]
                 if "timestamp" in latest_build:
-                    builds[job["name"]].extend({"timestamp" : datetime.fromtimestamp(latest_build["timestamp"] / 1000)})
+                    builds[jobname]["timestamp"] = datetime.fromtimestamp(latest_build["timestamp"] / 1000)
                 if "culprits" in latest_build:
-                    builds[job["name"]].extend({"culprits" : [culprit["fullName"] for culprit in latest_build["culprits"]]})
-        else:
-                builds[job["name"]] = {"request_status" : "not_found"}
+                    builds[jobname]["culprits"] = [culprit["fullName"] for culprit in latest_build["culprits"]]
         return builds
 
     def __latest_build_in_view__(self, job):
         latest = {}
-        for build in job["builds"]:
-            if not "id" in latest or "id" in build and int(latest["id"]) < int(build["id"]):
+        for build in job["builds"]: # sort by number
+            if not latest or "number" in build and latest["number"] < build["number"]:
                 latest = build
         return latest
 

@@ -162,7 +162,7 @@ def configure_from_dict(configuration, key):
         if not configuration["output"]:
             raise ValueError("No outputs configured")
         outputs=tuple(__configure_dynamic__(configuration["output"], key))
-        __check_all_implement_method__(outputs, "signal")
+        __check_all_implement_method__(outputs, "on_update")
         operating_hours = __parse_hours_or_days__(configuration.get("operatingHours", "*"), "0-23")
         operating_days = __parse_hours_or_days__(configuration.get("operatingDays", "*"), "0-6")
         logger.info("Read configuration: %s", configuration)

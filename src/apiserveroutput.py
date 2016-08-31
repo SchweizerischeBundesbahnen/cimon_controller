@@ -19,26 +19,37 @@ from output import BuildFilter
 logger = logging.getLogger(__name__)
 
 default_host = "localhost"
+default_port = 8080
+default_views = {"all" : BuildFilter(".*")}
 
 def create(configuration, key=None):
     """Create an instance (called by cimon.py)"""
-    global host, port
+    global host, port, created, views
+    if created: # safeguard against double creation since we use global variables
+        raise ValueError("There is allready one API server configured, only one is allwowed")
     host = configuration.get("host", default_host)
-    port = configuration.get("port", None)
+    port = configuration.get("port", default_port)
+    views_from_config = configuration.get("views", {}) # view: pattern
+    for view_name, pattern in views_from_config.items():
+        views[view_name] =  BuildFilter(pattern) if pattern else BuildFilter(".*")
+    created = True
     return ApiServerOutput()
 
+created = False
 host = default_host
-port = 8080
+port = default_port
 __shared_status__ = {}
 server = None
 server_lock = RLock()
+views=default_views
 
 def start_http_server_if_not_started():
+    global server_lock
     try:
         server_lock.acquire()
         global server
         if not server:
-            server = HTTPServer((host, port), ApiServer)
+            server = HTTPServer((host, port), ApiServerRequestHandler)
             logger.info("Starting http server at %s:%d", host, port)
             Thread(target=server.serve_forever).start()
     finally:
@@ -122,8 +133,8 @@ class ApiServer():
             return (404, 'Unkonwn build job "%s"' % job)
 
     def handle_view(self, view, build_status):
-        if view == "all":
-            return (200, self.__to_jenkins_view_result__(build_status))
+        if view in views:
+            return (200, self.__to_jenkins_view_result__(views[view].filter_build_status(build_status)))
         else:
             return (404, 'Unknown view "%s"' % view)
 
@@ -179,7 +190,7 @@ class ApiServerRequestHandler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-type","application/json;charset=utf-8")
         self.end_headers()
-        json.dump(jenkins_response.encode("utf-8"), self.wfile)
+        self.wfile.write(json.dumps(jenkins_response).encode("utf-8"))
 
 if  __name__ =='__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)

@@ -12,7 +12,7 @@ import re
 import json
 
 def read(file_name):
-    with open("%s/testdata/%s" % (os.path.dirname(__file__), file_name)) as f:
+    with open("%s/testdata/%s" % (os.path.dirname(__file__), file_name), encoding='utf-8') as f:
         return f.read()
 
 def to_filename(view_name):
@@ -48,6 +48,7 @@ class TestJenkinsCollector(TestCase):
     view_name_nested = "mvp/view/zvs-drittgeschaeft"
     view_name_nested_loop = "mvp/view/zvs-drittgeschaeft-fake-broken-with-loop"
     view_name_building = "kd/view/sid"
+    view_name_depth_2 = "pz/view/touri"
     url = "https://ci.sbb.ch"
 
 
@@ -232,26 +233,21 @@ class TestJenkinsCollector(TestCase):
         view_name = match.group(1).strip("/")
         return read("nested_view/" + to_filename(view_name))
 
-class TestParseDepth2View(TestCase):
+    def test_collect_view_with_numbers(self):
+        build = self.do_collect_views(6, view_name=self.view_name_depth_2)
+        self.assertEquals(4, len([k for (k, v) in build.items() if "number" in v and v["number"]]))
 
-    def test_parse_view(self):
-        view_as_string = read(to_filename("pz/view/touri"))
-        view = json.loads(view_as_string)
-        for job in view["jobs"]:
-            latest = {}
-            for build in job["builds"]:
-                print(build["id"] + " / " + (str(build["timestamp"])))
-                if not "id" in latest or "id" in build and int(latest["id"]) < int(build["id"]):
-                    if latest:
-                        print(str(latest["timestamp"]) + " < " + str(build["timestamp"]))
-                    else:
-                        print("no latest")
-                    latest = build
-            if latest:
-                print("result " + job["name"] + ": " + latest["id"] + " / " + (str(latest["timestamp"])))
-            else:
-                print("no result"+ job["name"] )
+    def test_collect_view_with_timestamp(self):
+        build = self.do_collect_views(6, view_name=self.view_name_depth_2)
+        self.assertEquals(4, len([k for (k, v) in build.items() if "timestamp" in v and v["timestamp"]]))
 
+    def test_collect_view_with_culprits(self):
+        build = self.do_collect_views(6, view_name=self.view_name_depth_2)
+        self.assertEquals(3, len([k for (k, v) in build.items() if "culprits" in v and v["culprits"]]))
+
+    def test_collect_view_without_numbers(self):
+        build = self.do_collect_views(66, view_name=self.view_name_1)
+        self.assertEquals(0, len([k for (k, v) in build.items() if "number" in v and v["number"]]))
 
 if __name__ == '__main__':
     main()
