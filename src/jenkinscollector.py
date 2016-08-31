@@ -30,6 +30,7 @@ from configutil import decrypt
 # }
 default_max_parallel_requests=7
 default_update_views_every = 50
+default_view_depth=0
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,8 @@ def create(configuration, key=None):
                             job_names= configuration.get("jobs", ()),
                             view_names = configuration.get("views", ()),
                             max_parallel_requests = configuration.get("maxParallelRequest", default_max_parallel_requests),
-                            verify_ssl = configuration.get("verifySsl", True))
+                            verify_ssl = configuration.get("verifySsl", True),
+                            view_depth = configuration.get("viewDepth", default_view_depth))
 
 
 class JenkinsCollector:
@@ -52,12 +54,13 @@ class JenkinsCollector:
                         "yellow" : "unstable",
                         "blue" : "success"}
 
-    def __init__(self, base_url, username = None, password = None, job_names =(), view_names = (), max_parallel_requests=default_max_parallel_requests, saml_login_url=None, verify_ssl=True):
+    def __init__(self, base_url, username = None, password = None, job_names =(), view_names = (), max_parallel_requests=default_max_parallel_requests, saml_login_url=None, verify_ssl=True, view_depth=default_view_depth):
         self.jenkins = JenkinsClient(http_client=create_http_client(base_url=base_url,
                                                                     username=username,
                                                                     password=password,
                                                                     saml_login_url=saml_login_url,
-                                                                    verify_ssl=verify_ssl))
+                                                                    verify_ssl=verify_ssl),
+                                    view_depth=view_depth)
 
         self.job_names = tuple(job_names)
         self.view_names = tuple(view_names)
@@ -108,6 +111,7 @@ class JenkinsCollector:
         build["result"] = self.__convert_store_fill_job_result__(job_name, jenkins_build_result["result"])
         build["number"] = jenkins_build_result["number"]
         build["timestamp"] = datetime.fromtimestamp(jenkins_build_result["timestamp"]/1000.0)
+        build["culprits"] = [culprit["fullName"] for culprit in jenkins_build_result["culprits"]]
         logger.debug("Converted Build result", build)
         return build
 
@@ -144,22 +148,36 @@ class JenkinsCollector:
     def __extract_job__status__(self, view):
         builds = {}
         for job in view["jobs"]:
+            jobname = job["name"]
             if "color" in job:
                 color_status_building = job["color"].split("_") if job["color"] else (None,)
 
                 if color_status_building[0] == "disabled":
-                    builds[job["name"]] = {"request_status" : "not_found"}
+                    builds[jobname] = {"request_status" : "not_found"}
                 elif color_status_building[0] in self.colors_to_result:
-                    builds[job["name"]] = {"request_status" : "ok",
+                    builds[jobname] = {"request_status" : "ok",
                                            "result" : self.colors_to_result[color_status_building[0]],
                                            "building" : len(color_status_building) > 1 and color_status_building[1] == "anime"}
                 else:
-                    builds[job["name"]] = {"request_status" : "ok",
+                    builds[jobname] = {"request_status" : "ok",
                                            "result" : "other",
                                            "building" : False }
-            else:
-                builds[job["name"]] = {"request_status" : "not_found"}
+            if "builds" in job: # requires depth 2
+                latest_build = self.__latest_build_in_view__(job)
+                if "number" in latest_build:
+                    builds[jobname]["number"] = latest_build["number"]
+                if "timestamp" in latest_build:
+                    builds[jobname]["timestamp"] = datetime.fromtimestamp(latest_build["timestamp"] / 1000)
+                if "culprits" in latest_build:
+                    builds[jobname]["culprits"] = [culprit["fullName"] for culprit in latest_build["culprits"]]
         return builds
+
+    def __latest_build_in_view__(self, job):
+        latest = {}
+        for build in job["builds"]: # sort by number
+            if not latest or "number" in build and latest["number"] < build["number"]:
+                latest = build
+        return latest
 
     def __extract_nested_view_names__(self, view):
         views = []
@@ -183,14 +201,15 @@ class JenkinsCollector:
 class JenkinsClient():
     """ copied and simplifed from jenkinsapi by Willow Garage in order to ensure singe requests for latest build
         as oposed to multiple requests and local status"""
-    def __init__(self, http_client):
+    def __init__(self, http_client,view_depth=default_view_depth):
         self.http_client = http_client
+        self.view_depth=view_depth
 
     def latest_build(self, job_name):
         return json.loads(self.http_client.open_and_read("/job/%s/lastBuild/api/json?depth=0" % job_name))
 
     def view(self, view_name):
-        return json.loads(self.http_client.open_and_read("/view/%s/api/json?depth=0" % view_name))
+        return json.loads(self.http_client.open_and_read("/view/%s/api/json?depth=%d" % (view_name,self.view_depth)))
 
 
 if  __name__ =='__main__':
