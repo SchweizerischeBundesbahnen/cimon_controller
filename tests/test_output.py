@@ -125,22 +125,22 @@ class AbstractBuildAmpelTest(TestCase):
     def test_filter_ok(self):
         filter = BuildFilter("job\.\w*")
         status = {"build" : {"job.a" :{"request_status" : "ok", "result" : "success"}}}
-        self.assertEquals(status, filter.filter(status))
+        self.assertEquals(status, filter.filter_status(status))
 
     def test_filter_ok_many(self):
         filter = BuildFilter("job\.\w*")
         status = {"build" : {"job.a" :{"request_status" : "ok", "result" : "success"}, "job.b" :{"request_status" : "not_found"}}}
-        self.assertEquals(status, filter.filter(status))
+        self.assertEquals(status, filter.filter_status(status))
 
     def test_filter_filtered(self):
         filter = BuildFilter("job\.\w*")
         status = {"build" : {"another.a" :{"request_status" : "ok", "result" : "success"}}}
-        self.assertEquals({"build" : {}}, filter.filter(status))
+        self.assertEquals({"build" : {}}, filter.filter_status(status))
 
     def test_filter_nofilter(self):
         filter = BuildFilter()
         status = {"build" : {"another.a" : {"job.a" :{"request_status" : "ok", "result" : "success"}}}}
-        self.assertEquals(status, filter.filter(status))
+        self.assertEquals(status, filter.filter_status(status))
 
     def test_filter_with_ampel(self):
         ampel = self.__create_ampel__(signal_error_threshold=1, build_filter_pattern="bla.*") # threshold is pointless here as no previosu status exists

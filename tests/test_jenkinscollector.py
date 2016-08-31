@@ -9,6 +9,14 @@ from unittest.mock import MagicMock, Mock
 import os
 from datetime import datetime
 import re
+import json
+
+def read(file_name):
+    with open("%s/testdata/%s" % (os.path.dirname(__file__), file_name), encoding='utf-8') as f:
+        return f.read()
+
+def to_filename(view_name):
+    return view_name.replace("/", "__")
 
 class TestJenkinsClient(TestCase):
     json_str = '{ "foo": "bar" }'
@@ -40,18 +48,13 @@ class TestJenkinsCollector(TestCase):
     view_name_nested = "mvp/view/zvs-drittgeschaeft"
     view_name_nested_loop = "mvp/view/zvs-drittgeschaeft-fake-broken-with-loop"
     view_name_building = "kd/view/sid"
+    view_name_depth_2 = "pz/view/touri"
     url = "https://ci.sbb.ch"
 
-    def read(self, file_name):
-        with open("%s/testdata/%s" % (os.path.dirname(__file__), file_name)) as f:
-            return f.read()
-
-    def to_filename(self, view_name):
-        return view_name.replace("/", "__")
 
     def do_collect_jobs(self, job_name):
         col = JenkinsCollector(self.url, job_names= (job_name, ))
-        retval = self.read(job_name)
+        retval = read(job_name)
         col.jenkins.http_client.open_and_read = MagicMock(spec=(""), return_value=retval)
         status = col.collect()
         self.assertIsNotNone(status[job_name])
@@ -84,6 +87,10 @@ class TestJenkinsCollector(TestCase):
         status = self.do_collect_jobs(self.job_name_success)
         self.assertEqual(datetime(2016, 3, 19, 23, 16, 22, 182000), status[self.job_name_success]["timestamp"])
 
+    def test_culprits(self):
+        status = self.do_collect_jobs(self.job_name_failed)
+        self.assertEqual(["Diacon Gilles"], status[self.job_name_failed]["culprits"])
+
     def test_build_result_failed(self):
         status = self.do_collect_jobs(self.job_name_failed)
         self.assertEqual("failure", status[self.job_name_failed]["result"])
@@ -108,7 +115,7 @@ class TestJenkinsCollector(TestCase):
     def do_collect_views(self, expected_nr_jobs, view_name, error=None):
         col = JenkinsCollector(self.url, view_names = (view_name, ))
         col.jenkins.http_client.open_and_read = MagicMock(spec=(""),
-                                                return_value= self.read(self.to_filename(view_name)) if not error else None,
+                                                return_value= read(to_filename(view_name)) if not error else None,
                                                 side_effect = error)
         builds = col.collect()
         self.assertEqual(len(builds), expected_nr_jobs)
@@ -150,9 +157,9 @@ class TestJenkinsCollector(TestCase):
     def test_collect_jobs_and_views(self):
         col = JenkinsCollector(self.url, job_names= (self.job_name_success, self.job_name_failed), view_names=(self.view_name_2, ))
         content_by_key = {
-                            self.job_name_success : self.read(self.job_name_success),
-                            self.job_name_failed : self.read(self.job_name_failed),
-                            self.view_name_2 : self.read(self.view_name_2.replace("/", "__"))
+                            self.job_name_success : read(self.job_name_success),
+                            self.job_name_failed :read(self.job_name_failed),
+                            self.view_name_2 : read(self.view_name_2.replace("/", "__"))
         }
         col.jenkins.http_client.open_and_read = Mock(spec=(""), side_effect=lambda x : [content_by_key[k] for k in content_by_key if k in x][0])
         status = col.collect()
@@ -186,14 +193,14 @@ class TestJenkinsCollector(TestCase):
     def test_build_job_first_success_then_building(self):
         col = JenkinsCollector(self.url, job_names= (self.job_name_building, ))
         filter=lambda x : x.replace("\"building\":true", "\"building\":false").replace("\"result\":null", "\"result\":\"SUCCESS\"")
-        col.jenkins.http_client.open_and_read = MagicMock(spec=(""), return_value = filter(self.read(self.job_name_building)))
+        col.jenkins.http_client.open_and_read = MagicMock(spec=(""), return_value = filter(read(self.job_name_building)))
         # first request - not building yet
         status = col.collect()
         self.assertEquals("success", status[self.job_name_building]["result"])
         self.assertFalse(status[self.job_name_building]["building"])
 
         # second request - building now
-        col.jenkins.http_client.open_and_read = MagicMock(spec=(""), return_value = self.read(self.job_name_building))
+        col.jenkins.http_client.open_and_read = MagicMock(spec=(""), return_value = read(self.job_name_building))
         status = col.collect()
         self.assertEquals("success", status[self.job_name_building]["result"])
         self.assertTrue(status[self.job_name_building]["building"])
@@ -204,7 +211,7 @@ class TestJenkinsCollector(TestCase):
 
         # third request - failed
         filter=lambda x : x.replace("\"building\":true", "\"building\":false").replace("\"result\":null", "\"result\":\"FAILURE\"")
-        col.jenkins.http_client.open_and_read = MagicMock(spec=(""), return_value = filter(self.read(self.job_name_building)))
+        col.jenkins.http_client.open_and_read = MagicMock(spec=(""), return_value = filter(read(self.job_name_building)))
         status = col.collect()
         self.assertEquals("failure", status[self.job_name_building]["result"])
         self.assertFalse(status[self.job_name_building]["building"])
@@ -221,11 +228,26 @@ class TestJenkinsCollector(TestCase):
         build = col.collect()
         self.assertEqual(len(build), 124)
 
-
     def mock_open_and_read_for_nested_view(self, request_path):
         match = re.match("/view/(.*)/api/json", request_path)
         view_name = match.group(1).strip("/")
-        return self.read("nested_view/" + self.to_filename(view_name))
+        return read("nested_view/" + to_filename(view_name))
+
+    def test_collect_view_with_numbers(self):
+        build = self.do_collect_views(6, view_name=self.view_name_depth_2)
+        self.assertEquals(4, len([k for (k, v) in build.items() if "number" in v and v["number"]]))
+
+    def test_collect_view_with_timestamp(self):
+        build = self.do_collect_views(6, view_name=self.view_name_depth_2)
+        self.assertEquals(4, len([k for (k, v) in build.items() if "timestamp" in v and v["timestamp"]]))
+
+    def test_collect_view_with_culprits(self):
+        build = self.do_collect_views(6, view_name=self.view_name_depth_2)
+        self.assertEquals(3, len([k for (k, v) in build.items() if "culprits" in v and v["culprits"]]))
+
+    def test_collect_view_without_numbers(self):
+        build = self.do_collect_views(66, view_name=self.view_name_1)
+        self.assertEquals(0, len([k for (k, v) in build.items() if "number" in v and v["number"]]))
 
 if __name__ == '__main__':
     main()

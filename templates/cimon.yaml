@@ -31,6 +31,9 @@ collector:
     views: []
     # maximum number of parallel requests to the jenkins server. Default is 7.
     # maxParallelRequest: 7
+    # the depth parameter in the api query to jenkins when querying views (depth=x). The higher the more data is sent.
+    # Default is 0, use 2 if you need timestamp and culprits from views (for instance for apiserveroutput)
+    # viewDepth: 0
 # collectors - fetching the current status to display, for instance build status
 output:
   # Output to the USB Ampel. Usually no configuration required.
@@ -60,6 +63,18 @@ output:
     # repeatEvery=15
     # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
     # buildFilterPattern=".*"
+  - implementation: apiserveroutput
+    # Proxy Jenkins (and in future other services). Provide a HTTP Rest API server to the remote service (
+    # so its remote service -> CIMON -> api server)
+    # the host the api server will bind, per default "localhost" (for a local proxy the default is fine)
+    # host: localhost
+    # the port the api server will run on. Default is 8080, change if that is allready occupied
+    # port: 8080
+    # certain emulated jenkins views to provide. Per default there is "all" which includes all collected builds
+    # views:
+      # name: regex pattern (will be applied on the build name)
+      #myview: "my\.build\.to\.display\..*"
+      #myotherview: "my\.otherbuild\.to\.display\..*"
 
 # logging configuration, will be passed on to the python loggin dictionary config 1:1.
 # will log from INFO to a file in /var/log/cimon/cimon.log and from CRITICAL to stderr
