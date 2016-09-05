@@ -101,11 +101,8 @@ class Cimon():
         # first collect the current status
         status = {}
         for collector in self.collectors:
-            if collector.type not in status:
-                status[collector.type] = {}
-            collected_status = collector.collect()
-            if collected_status:
-                status[collector.type].update(collected_status)
+            status[collector.type] = status[collector.type] if collector.type in status else {}
+            status[collector.type].update(collector.collect())
         logger.debug("Collected status: %s", status)
         # then display the current status
         for output in self.outputs:
