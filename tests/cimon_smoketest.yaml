@@ -4,6 +4,7 @@ collector:
   - implementation: rotatingcollector
 output:
   - implementation: consoleoutput
+  # - implementation: playbulboutput
 
 logging:
   version: 1
