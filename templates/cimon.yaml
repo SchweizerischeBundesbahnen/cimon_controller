@@ -77,7 +77,7 @@ output:
       #myotherview: "my\.otherbuild\.to\.display\..*"
 
     - implementation: playbulboutput
-    # the device is mandatory and is the (bluetooth) mac address of your bulp
+    # the device (mandatory) is the (bluetooth) mac address of your bulb
     # device:
     #
     # the number of errors until error is signaled (all lights on). Default is 3 (the 4th error is displayed)
