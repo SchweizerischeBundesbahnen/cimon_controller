@@ -4,7 +4,20 @@ collector:
   - implementation: rotatingcollector
 output:
   - implementation: consoleoutput
-  # - implementation: playbulboutput
+  - implementation: apiserveroutput
+      # Proxy Jenkins (and in future other services). Provide a HTTP Rest API server to the remote service (
+      # so its remote service -> CIMON -> api server)
+      # the host the api server will bind, per default "localhost" (for a local proxy the default is fine)
+      # host: localhost
+      # the port the api server will run on. Default is 8080, change if that is allready occupied
+    port: 8088
+      # certain emulated jenkins views to provide. Per default there is "all" which includes all collected builds
+    views:
+      # name: regex pattern (will be applied on the build name)
+      myview:
+      myotherview: "imaginary.*"
+      myemptyview: "hotzenplotz.*"
+  - implementation: playbulboutput
 
 logging:
   version: 1
