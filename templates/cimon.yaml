@@ -31,9 +31,6 @@ collector:
     views: []
     # maximum number of parallel requests to the jenkins server. Default is 7.
     # maxParallelRequest: 7
-    # the depth parameter in the api query to jenkins when querying views (depth=x). The higher the more data is sent.
-    # Default is 0, use 2 if you need timestamp and culprits from views (for instance for apiserveroutput)
-    # viewDepth: 0
 # collectors - fetching the current status to display, for instance build status
 output:
   # Output to the USB Ampel. Usually no configuration required.
@@ -63,18 +60,30 @@ output:
     # repeatEvery=15
     # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
     # buildFilterPattern=".*"
-  - implementation: apiserveroutput
-    # Proxy Jenkins (and in future other services). Provide a HTTP Rest API server to the remote service (
-    # so its remote service -> CIMON -> api server)
-    # the host the api server will bind, per default "localhost" (for a local proxy the default is fine)
-    # host: localhost
-    # the port the api server will run on. Default is 8080, change if that is allready occupied
-    # port: 8080
-    # certain emulated jenkins views to provide. Per default there is "all" which includes all collected builds
-    # views:
-      # name: regex pattern (will be applied on the build name)
-      #myview: "my\.build\.to\.display\..*"
-      #myotherview: "my\.otherbuild\.to\.display\..*"
+  #- implementation: playbulboutput
+     # the device is mandatory and is the (bluetooth) mac address of your bulp
+     # device:
+     #
+     # the number of errors until error is signaled (all lights on). Default is 3 (the 4th error is displayed)
+     # signalErrorThreshold: 3
+     #
+     # The color_reg is the register for the color command, default is 0x001b it depends on your hardware revision
+     # color_reg= 0x001b
+     #
+     # The flash_reg is the register for the flash/rainbow/pulse command, default is 0x0019 it depends on your hardware revision
+     # flash_reg= 0x0019
+     #
+     # color codes
+     # red_color= 00ff0000
+     # green_color= 0000ff00
+     # yellow_color= 00ffff00
+     # flash code, please have a look at your playbulb manual for valid values, default is pulse with speed 04 04
+     # red_color= 01000404
+     #
+     # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
+     # buildFilterPattern=".*"
+   # Output to the Energenie Socket (Steckdosenleiste). Usually no configuration required.
+   # remove if you dont use Energenie.
 
 # logging configuration, will be passed on to the python loggin dictionary config 1:1.
 # will log from INFO to a file in /var/log/cimon/cimon.log and from CRITICAL to stderr
