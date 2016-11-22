@@ -13,6 +13,7 @@ import yaml
 import signal
 from datetime import datetime, timedelta, time
 from argparse import ArgumentParser
+from copy import deepcopy
 
 # The Masterboxcontrolprogram of the ci monitor scripts.
 #
@@ -100,15 +101,12 @@ class Cimon():
         # first collect the current status
         status = {}
         for collector in self.collectors:
-            if collector.type not in status:
-                status[collector.type] = {}
-            collected_status = collector.collect()
-            if collected_status:
-                status[collector.type].update(collected_status)
+            status[collector.type] = status[collector.type] if collector.type in status else {}
+            status[collector.type].update(collector.collect())
         logger.debug("Collected status: %s", status)
         # then display the current status
         for output in self.outputs:
-            output.on_update(status)
+            output.on_update(deepcopy(status))
         logger.info("Collected status and updated outputs")
 
     def sec_to_next_operating(self, now):
@@ -161,7 +159,7 @@ def configure_from_dict(configuration, key):
         if not configuration["output"]:
             raise ValueError("No outputs configured")
         outputs=tuple(__configure_dynamic__(configuration["output"], key))
-        __check_all_implement_method__(outputs, "signal")
+        __check_all_implement_method__(outputs, "on_update")
         operating_hours = __parse_hours_or_days__(configuration.get("operatingHours", "*"), "0-23")
         operating_days = __parse_hours_or_days__(configuration.get("operatingDays", "*"), "0-6")
         logger.info("Read configuration: %s", configuration)

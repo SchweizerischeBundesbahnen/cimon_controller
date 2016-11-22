@@ -61,13 +61,17 @@ class BuildFilter():
     def __init__(self, pattern=None):
         self.filter_pattern = re.compile(pattern) if pattern else None
 
-    def filter(self, status):
+    def filter_status(self, status):
         if "build" in status and self.filter_pattern:
             status_filtered = status.copy() # shallow copy
-            status_filtered["build"] =  {k: v for k, v in status["build"].items() if self.filter_pattern.match(k)}
+            status_filtered["build"] =  self.filter_build_status(status["build"])
             return status_filtered
         else:
             return status
+
+    def filter_build_status(self, build_status):
+        return {k: v for k, v in build_status.items() if self.filter_pattern.match(k)}
+
 
 # Abstract base classes for outputs
 class AbstractBuildOutput():
@@ -79,7 +83,7 @@ class AbstractBuildOutput():
         self.last_status=None
 
     def on_update(self, status):
-        self.on_update_filtered(self.build_filter.filter(status))
+        self.on_update_filtered(self.build_filter.filter_status(status))
 
     def on_update_filtered(self, status):
         if "build" not in status:

@@ -31,6 +31,9 @@ collector:
     views: []
     # maximum number of parallel requests to the jenkins server. Default is 7.
     # maxParallelRequest: 7
+    # the depth parameter in the api query to jenkins when querying views (depth=x). The higher the more data is sent.
+    # Default is 0, use 2 if you need timestamp and culprits from views (for instance for apiserveroutput)
+    # viewDepth: 0
 # collectors - fetching the current status to display, for instance build status
 output:
   # Output to the USB Ampel. Usually no configuration required.
@@ -50,6 +53,7 @@ output:
     # buildFilterPattern=".*"
   # Output to the Energenie Socket (Steckdosenleiste). Usually no configuration required.
   # remove if you dont use Energenie.
+
   - implementation: energenieoutput
     # will find the device automatically, but for instance if you have multiple devices you can configure the number here.
     # use "sispmctl -s" to find your device number
@@ -58,6 +62,49 @@ output:
     # signalErrorThreshold: 3
     # repeat the output every n times even if it is unchanged. Default is every 15 times.
     # repeatEvery=15
+    # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
+    # buildFilterPattern=".*"
+    # change the assignment of sockets (numbers 1 to 4) the colors red, yellow and green. Default is 1: red, 2: yellow, 3: green and 4: red.
+    # Sockets can be omitted (will not be switched by this output, for instance 1: green, 2: yellow will only switch 1 and 2 but not 3 and 4)
+    # colors:
+    #  1: red
+    #  2: yellow
+    #  3: green
+    #  4: red
+
+  - implementation: apiserveroutput
+    # Proxy Jenkins (and in future other services). Provide a HTTP Rest API server to the remote service (
+    # so its remote service -> CIMON -> api server)
+    # the host the api server will bind, per default "localhost" (for a local proxy the default is fine)
+    # host: localhost
+    # the port the api server will run on. Default is 8080, change if that is allready occupied
+    # port: 8080
+    # certain emulated jenkins views to provide. Per default there is "all" which includes all collected builds
+    # views:
+      # name: regex pattern (will be applied on the build name)
+      #myview: "my\.build\.to\.display\..*"
+      #myotherview: "my\.otherbuild\.to\.display\..*"
+
+    - implementation: playbulboutput
+    # the device (mandatory) is the (bluetooth) mac address of your bulb
+    # device:
+    #
+    # the number of errors until error is signaled (all lights on). Default is 3 (the 4th error is displayed)
+    # signalErrorThreshold: 3
+    #
+    # The color_reg is the register for the color command, default is 0x001b it depends on your hardware revision
+    # color_reg= 0x001b
+    #
+    # The flash_reg is the register for the flash/rainbow/pulse command, default is 0x0019 it depends on your hardware revision
+    # flash_reg= 0x0019
+    #
+    # color codes
+    # red_color= 00ff0000
+    # green_color= 0000ff00
+    # yellow_color= 00ffff00
+    # flash code, please have a look at your playbulb manual for valid values, default is pulse with speed 04 04
+    # red_color= 01000404
+    #
     # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
     # buildFilterPattern=".*"
 
