@@ -53,6 +53,7 @@ output:
     # buildFilterPattern=".*"
   # Output to the Energenie Socket (Steckdosenleiste). Usually no configuration required.
   # remove if you dont use Energenie.
+
   - implementation: energenieoutput
     # will find the device automatically, but for instance if you have multiple devices you can configure the number here.
     # use "sispmctl -s" to find your device number
@@ -63,6 +64,14 @@ output:
     # repeatEvery=15
     # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
     # buildFilterPattern=".*"
+    # change the assignment of sockets (numbers 1 to 4) the colors red, yellow and green. Default is 1: red, 2: yellow, 3: green and 4: red.
+    # Sockets can be omitted (will not be switched by this output, for instance 1: green, 2: yellow will only switch 1 and 2 but not 3 and 4)
+    # colors:
+    #  1: red
+    #  2: yellow
+    #  3: green
+    #  4: red
+
   - implementation: apiserveroutput
     # Proxy Jenkins (and in future other services). Provide a HTTP Rest API server to the remote service (
     # so its remote service -> CIMON -> api server)

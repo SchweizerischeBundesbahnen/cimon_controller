@@ -17,7 +17,6 @@ output:
       myview:
       myotherview: "imaginary.*"
       myemptyview: "hotzenplotz.*"
-  - implementation: playbulboutput
 
 logging:
   version: 1
