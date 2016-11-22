@@ -76,7 +76,7 @@ output:
       #myview: "my\.build\.to\.display\..*"
       #myotherview: "my\.otherbuild\.to\.display\..*"
 
-    - implementation: playbulboutput
+  - implementation: playbulboutput
     # the device (mandatory) is the (bluetooth) mac address of your bulb
     # device:
     #
