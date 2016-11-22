@@ -6,9 +6,8 @@ collector:
   - implementation: rotatingcollector
 output:
   - implementation: clewareampeloutput
-    # device:
   - implementation: energenieoutput
-    # deviceNr:
+  - implementation: playbulboutput
 
 logging:
   version: 1
