@@ -123,7 +123,7 @@ class AbstractBuildOutput():
         # but only if at least one build had request_status == "ok" and result == "success"
         elif has_result(status, "success"):
             self.__signal_status_and_store__("success", building)
-        # if all builds are request_status == "not_found", signal nothing
+        # if all builds are request_status == "not_found" or result == "notbuilt", signal nothing
         elif self.last_status:
             logger.debug("No build found, repeating last stored signal")
             self.signal_status(*self.last_status)
