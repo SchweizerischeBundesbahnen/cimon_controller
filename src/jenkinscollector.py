@@ -52,7 +52,8 @@ class JenkinsCollector:
     # extract result and building state from the colors in the view
     colors_to_result = {"red" : "failure",
                         "yellow" : "unstable",
-                        "blue" : "success"}
+                        "blue" : "success",
+                        "notbuilt" : "notbuilt"}
 
     def __init__(self, base_url, username = None, password = None, job_names =(), view_names = (), max_parallel_requests=default_max_parallel_requests, saml_login_url=None, verify_ssl=True, view_depth=default_view_depth):
         self.jenkins = JenkinsClient(http_client=create_http_client(base_url=base_url,
@@ -117,7 +118,7 @@ class JenkinsCollector:
 
     def __convert_store_fill_job_result__(self, job_name, jenkins_result):
         if jenkins_result:
-            result = jenkins_result.lower() if jenkins_result in ("SUCCESS", "UNSTABLE", "FAILURE") else "other" # ABORTED or NOT_BUILT
+            result = jenkins_result.lower() if jenkins_result in ("SUCCESS", "UNSTABLE", "FAILURE") else "other" # ABORTED
             self.last_results[job_name] = result
             return result
         else:
