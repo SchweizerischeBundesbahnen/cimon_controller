@@ -46,11 +46,11 @@ output:
     # the number of errors until error is signaled (all lights on). Default is 3 (the 4th error is displayed)
     # signalErrorThreshold: 3
     # the interval of the flashing in case the build is active in seconds. Default is 1.5 second. Put -1 to turn off flashing.
-    # flashIntervalSec=1.5
+    # flashIntervalSec: 1.5
     # output all light states every given seconds. Put 0 to enforce absolute output every time. Default is 300 seconds (5 minutes)
-    # absoulteEverySec=300
+    # absoulteEverySec: 300
     # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
-    # buildFilterPattern=".*"
+    # buildFilterPattern: ".*"
   # Output to the Energenie Socket (Steckdosenleiste). Usually no configuration required.
   # remove if you dont use Energenie.
 
@@ -61,9 +61,9 @@ output:
     # the number of errors until error is signaled (all lights on). Default is 3 (the 4th error is displayed)
     # signalErrorThreshold: 3
     # repeat the output every n times even if it is unchanged. Default is every 15 times.
-    # repeatEvery=15
+    # repeatEvery: 15
     # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
-    # buildFilterPattern=".*"
+    # buildFilterPattern: ".*"
     # change the assignment of sockets (numbers 1 to 4) the colors red, yellow and green. Default is 1: red, 2: yellow, 3: green and 4: red.
     # Sockets can be omitted (will not be switched by this output, for instance 1: green, 2: yellow will only switch 1 and 2 but not 3 and 4)
     # colors:
