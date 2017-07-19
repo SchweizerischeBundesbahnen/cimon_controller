@@ -147,6 +147,7 @@ class HttpClient:
             elif e.code >= 500 and retry < self.max_retries: # retry server side error (may be temporary), max 3 attempts
                 return self.__retry__("Temporary error %d %s" % (e.code, e.reason), request_path, retry);
             else:
+                self.__try__log_contents__(e)
                 raise e
         except (URLError, ContentTooShortError) as e:
             if retry < self.max_retries:
@@ -170,3 +171,11 @@ class HttpClient:
             return urlopen(request, context=self.ctx)
         else:
             return urlopen(request)
+
+
+    def __try__log_contents__(self, e):
+        try:
+            logger.info("Response heades: %s" % str(e.headers))
+            logger.info("Response contents %s" % e.file.read())
+        except:
+            pass # ignore
