@@ -225,7 +225,7 @@ def __start__(masterboxcontrolprogram):
     atexit.register(masterboxcontrolprogram.stop) # listens to SIGINT, also works on windows....
     if hasattr(signal, "SIGHUP"): # linux only
         signal.signal(signal.SIGHUP, masterboxcontrolprogram.stop)
-    if hasattr(signal, "SIGTERM"): # linux only
+    if hasattr(signal, "SIGTERM"):
         signal.signal(signal.SIGTERM, masterboxcontrolprogram.stop)
     # now start
     masterboxcontrolprogram.start()
