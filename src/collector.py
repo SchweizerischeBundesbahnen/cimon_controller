@@ -13,8 +13,12 @@ import sys
 
 logger = logging.getLogger(__name__)
 
-def create_http_client(base_url, username = None, password = None, saml_login_url=None, verify_ssl=True):
-    if saml_login_url:
+def create_http_client(base_url, username = None, password = None, jwt_login_url= None, saml_login_url=None, verify_ssl=True):
+    if jwt_login_url:
+        return HttpClient(base_url=base_url,
+                          authentication_handler=JwtAuthenticationHandler(username=username, password=password, jwt_login_url=jwt_login_url, verify_ssl=verify_ssl),
+                          verify_ssl=verify_ssl)
+    elif saml_login_url:
         return HttpClient(base_url=base_url,
                           authentication_handler=SamlAuthenticationHandler(username=username, password=password, saml_login_url=saml_login_url, verify_ssl=verify_ssl),
                           verify_ssl=verify_ssl)
@@ -50,13 +54,12 @@ class BasicAuthenticationHandler():
     def handle_forbidden(self, request_headers, status_code):
         return True # retry
 
+class TokenBasedAuthenticationHandler():
+    """ Authenticate via a Token drawn from a configured login url """
 
-class SamlAuthenticationHandler():
-    """ Authenticate via SAML Cookies as implemented in SBB WSG """
-
-    def __init__(self, username, password, saml_login_url, verify_ssl=True):
-        self.login_http_client = HttpClient(saml_login_url, BasicAuthenticationHandler(username, password), verify_ssl=verify_ssl)
-        self.saml_cookie = None
+    def __init__(self, username, password, login_url, verify_ssl=True):
+        self.login_http_client = HttpClient(login_url, BasicAuthenticationHandler(username, password), verify_ssl=verify_ssl)
+        self.token = None
         self.is_renewing = False
         self.renewing = Condition()
 
@@ -66,46 +69,59 @@ class SamlAuthenticationHandler():
                 # wait for one thread to renew the lock
                 while self.is_renewing:
                     self.renewing.wait()
-        if self.saml_cookie:
-            return { "Cookie" : self.saml_cookie }
-        return {}
+        if not self.token:
+            self.login({})
+        return { self.request_header_name : self.token if self.token else "no token received" }
 
     def handle_forbidden(self, request_headers, status_code):
-        self.saml_login(request_headers)
-        # retry if there is a new cookie or not....
+        self.login(request_headers)
+        # retry whether there is a new token or not....
         return True
 
-    def saml_login(self, request_headers):
-        # only one of the threads will get the saml cookie
+    def login(self, request_headers):
+        # only one of the threads will get the jwt token
         with self.renewing:
             # check if another thread as allready set the cookie to a different value
-            if  self.saml_cookie == request_headers.get("Cookie", None):
+            if self.token == request_headers.get(self.request_header_name, None):
                 try:
                     self.is_renewing = True
-                    self.saml_cookie = self.__renew_saml_cookie__()
+                    self.token = self.__renew_token__()
                 finally:
                     self.is_renewing = False
                     self.renewing.notify_all()
 
-    def __renew_saml_cookie__(self):
-        # looks as if we have to aquire a (new) SAML Token....
-        logger.debug("Requesting new SAML Cookie from %s...", self.login_http_client.base_url)
+    def __renew_token__(self):
+        # looks as if we have to aquire a (new) JWT Token....
+        logger.debug("Requesting new Token from %s...", self.login_http_client.base_url)
         response = self.login_http_client.open()
-        saml_cookie = response.getheader("Set-Cookie")
-        if saml_cookie:
-            logger.info("Received new SAML Cookie")
-            if logger.isEnabledFor(logging.DEBUG):
-                saml_cookie_plantext = unquote(saml_cookie)
-                logger.debug("New SAML Cookie: '%s...%s'", saml_cookie_plantext[:65], saml_cookie_plantext[-125:]) # log only start in order to avoid leak
-            return saml_cookie
+        token = response.getheader(self.response_header_name)
+        if token:
+            logger.info("Received new Token")
+            logger.debug("New Token: '%s...'", token[:42]) # log only start in order to avoid leak
+            return token
         else:
-            logger.error("Failed to renew SAML Cookie, did not receive Set-Cookie")
-            return self.saml_cookie # try with old one, will try another login if cookie is missing....
+            logger.error("Failed to renew Token, did not receive an %s header" % self.response_header_name)
+            return self.token # try with old token, will try another login if token is invalid....
+
+class JwtAuthenticationHandler(TokenBasedAuthenticationHandler):
+    """ Authenticate via JWT Tokens as implemented in SBB WSG """
+    def __init__(self, username, password, jwt_login_url, verify_ssl=True):
+        super().__init__(username=username, password=password, login_url=jwt_login_url, verify_ssl=verify_ssl)
+        self.request_header_name="Authorization"
+        self.response_header_name="Authorization"
+
+class SamlAuthenticationHandler(TokenBasedAuthenticationHandler):
+    """ Authenticate via SAML Cookies as implemented in SBB WSG """
+    def __init__(self, username, password, saml_login_url, verify_ssl=True):
+        super().__init__(username=username, password=password, login_url=saml_login_url, verify_ssl=verify_ssl)
+        self.request_header_name="Cookie"
+        self.response_header_name="Set-Cookie"
 
 class HttpClient:
     """ A HttpClient able to do authentication via
     - Retry: Retry for instance 401 as this does sometimes help (Bug in SBB eBiz/LDAP)
     - BasicAuthentication: Username/Password - Use for instance from within SBB LAN. Also supports retry.
+    - JWTAuthentication: JWT using a specific Login URL and HTTP Authorization Headers for use with SBB Webservice Gateway (WSG) - access from outside SBB LAN
     - SamlAuthentication: SAML using a specific Login URL and HTTP Set-Cookie and Cookie Headers for use with SBB Webservice Gateway (WSG) - access from outside SBB LAN
     Will retry status code 5xx and if told so by authentication handler max_retries times (default 3 times)"""
 
