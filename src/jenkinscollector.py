@@ -38,6 +38,7 @@ def create(configuration, key=None):
     return JenkinsCollector(base_url = configuration["url"],
                             username = configuration.get("user", None),
                             password = configuration.get("password", None) or decrypt(configuration.get("passwordEncrypted", None), key),
+                            jwt_login_url = configuration.get("jwtLoginUrl", None),
                             saml_login_url = configuration.get("samlLoginUrl", None),
                             job_names= configuration.get("jobs", ()),
                             view_names = configuration.get("views", ()),
@@ -55,10 +56,11 @@ class JenkinsCollector:
                         "blue" : "success",
                         "notbuilt" : "notbuilt"}
 
-    def __init__(self, base_url, username = None, password = None, job_names =(), view_names = (), max_parallel_requests=default_max_parallel_requests, saml_login_url=None, verify_ssl=True, view_depth=default_view_depth):
+    def __init__(self, base_url, username = None, password = None, job_names =(), view_names = (), max_parallel_requests=default_max_parallel_requests, jwt_login_url=None, saml_login_url=None, verify_ssl=True, view_depth=default_view_depth):
         self.jenkins = JenkinsClient(http_client=create_http_client(base_url=base_url,
                                                                     username=username,
                                                                     password=password,
+                                                                    jwt_login_url=jwt_login_url,
                                                                     saml_login_url=saml_login_url,
                                                                     verify_ssl=verify_ssl),
                                     view_depth=view_depth)
