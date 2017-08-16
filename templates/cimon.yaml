@@ -21,8 +21,9 @@ collector:
     # encrypted password requires the correct AES Key at ~/cimon/key.bin
     #passwordEncrypted: <AES encrypted password, base64 encoded - use configutil --encrypt <mypassword>>
     #password: <plaintext-password, not recomended>
-    # url for the saml login using BasicAuthentication and then Set-Cookie and Cookie header
+    # url for the saml or jwt login
     #samlLoginUrl: <mysamlloginurl>
+    #jwtLoginUrl: <myjwtloginurl>
     # Validate HTTPS certificates - True per default (False only works with python >= 3.4.3)
     # validateCertificates: True
     # a list of jobs [job_a,job_b]. For multiple jobs better use a view.
