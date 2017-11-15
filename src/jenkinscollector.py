@@ -1,5 +1,7 @@
 # Copyright (C) Schweizerische Bundesbahnen SBB, 2016
 # Python 3.4
+from collector import ClientCert
+
 __author__ = 'florianseidl'
 
 from urllib.request import urlopen, HTTPError, Request, URLError
@@ -8,7 +10,7 @@ from concurrent import futures
 import json
 import logging
 import sys
-from collector import HttpClient, BasicAuthenticationHandler, SamlAuthenticationHandler, create_http_client
+from collector import HttpClient, BasicAuthenticationHandler, SamlAuthenticationHandler, create_http_client, configure_client_cert
 from configutil import decrypt
 
 # Collect the build status in jenins via rest requests.
@@ -44,7 +46,8 @@ def create(configuration, key=None):
                             view_names = configuration.get("views", ()),
                             max_parallel_requests = configuration.get("maxParallelRequest", default_max_parallel_requests),
                             verify_ssl = configuration.get("verifySsl", True),
-                            view_depth = configuration.get("viewDepth", default_view_depth))
+                            view_depth = configuration.get("viewDepth", default_view_depth),
+                            client_cert = configure_client_cert(configuration.get("clientCert", None), key))
 
 
 class JenkinsCollector:
@@ -56,14 +59,15 @@ class JenkinsCollector:
                         "blue" : "success",
                         "notbuilt" : "notbuilt"}
 
-    def __init__(self, base_url, username = None, password = None, job_names =(), view_names = (), max_parallel_requests=default_max_parallel_requests, jwt_login_url=None, saml_login_url=None, verify_ssl=True, view_depth=default_view_depth):
+    def __init__(self, base_url, username = None, password = None, job_names =(), view_names = (), max_parallel_requests=default_max_parallel_requests, jwt_login_url=None, saml_login_url=None, verify_ssl=True, view_depth=default_view_depth,client_cert=None):
         self.jenkins = JenkinsClient(http_client=create_http_client(base_url=base_url,
                                                                     username=username,
                                                                     password=password,
                                                                     jwt_login_url=jwt_login_url,
                                                                     saml_login_url=saml_login_url,
-                                                                    verify_ssl=verify_ssl),
-                                    view_depth=view_depth)
+                                                                    verify_ssl=verify_ssl,
+                                                                    client_cert=client_cert),
+                                                                    view_depth=view_depth)
 
         self.job_names = tuple(job_names)
         self.view_names = tuple(view_names)
