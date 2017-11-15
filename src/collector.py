@@ -10,29 +10,69 @@ from threading import Condition
 import logging
 import ssl
 import sys
+from os import path
+from configutil import decrypt
 
 logger = logging.getLogger(__name__)
 
-def create_http_client(base_url, username = None, password = None, jwt_login_url= None, saml_login_url=None, verify_ssl=True):
+def create_http_client(base_url, username = None, password = None, jwt_login_url= None, saml_login_url=None, verify_ssl=True, client_cert=None):
+    ssl_config = ssl_config=SslConfig(verify_ssl, client_cert)
     if jwt_login_url:
         return HttpClient(base_url=base_url,
                           authentication_handler=JwtAuthenticationHandler(username=username, password=password, jwt_login_url=jwt_login_url, verify_ssl=verify_ssl),
-                          verify_ssl=verify_ssl)
+                          ssl_config=ssl_config)
     elif saml_login_url:
         return HttpClient(base_url=base_url,
                           authentication_handler=SamlAuthenticationHandler(username=username, password=password, saml_login_url=saml_login_url, verify_ssl=verify_ssl),
-                          verify_ssl=verify_ssl)
+                          ssl_config=ssl_config)
     elif username:
         return HttpClient(base_url=base_url,
                           authentication_handler=BasicAuthenticationHandler(username=username, password=password),
-                          verify_ssl=verify_ssl)
+                          ssl_config=ssl_config)
     else:
-        return HttpClient(base_url=base_url, verify_ssl=verify_ssl)
+        return HttpClient(base_url=base_url, ssl_config=ssl_config)
 
 # Base classes to build collectors.
 #
 # Currently includes a HTTP Client with handlers for different kinds of authentication
 #
+
+def configure_client_cert(config, key=None):
+    if not config:
+        return None
+    return ClientCert(config['certfile'],config['keyfile'], decrypt(config.get('passwordEncrypted', None), key))
+
+class ClientCert:
+    def __init__(self, certfile, keyfile, password):
+        if not path.isfile(certfile):
+            raise FileNotFoundError(certfile)
+        if not path.isfile(keyfile):
+            raise FileNotFoundError(keyfile)
+        self.certfile = certfile
+        self.keyfile = keyfile
+        self.password = password
+
+    def add_to(self,ctx):
+        logger.info("Adding client certificate stored in  %s", self.certfile)
+        ctx.load_cert_chain(self.certfile, self.keyfile, self.password)
+
+class SslConfig:
+    def __init__(self, verify_ssl=True, client_cert=None):
+        self.ctx = ssl.create_default_context()
+        if not verify_ssl:
+            # verification activated, default will be fine
+            self.__disable_ssl_verification__(self.ctx)
+        if client_cert:
+            client_cert.add_to(self.ctx)
+
+    def __disable_ssl_verification__(self, ctx):
+        if sys.version_info < (3,4,3):
+            logger.warning("Disabling verify ssl is not supported in python version below 3.4.3. Ignoring configuration, ssl verfication is enabled")
+            return
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        logger.info("SSL validation disabled")
+
 class EmptyAuthenticationHandler:
     """ Implement no authentication so HttpClient is not forced to check for the presence of an authentication handler """
     def request_headers(self):
@@ -56,9 +96,8 @@ class BasicAuthenticationHandler():
 
 class TokenBasedAuthenticationHandler():
     """ Authenticate via a Token drawn from a configured login url """
-
-    def __init__(self, username, password, login_url, verify_ssl=True):
-        self.login_http_client = HttpClient(login_url, BasicAuthenticationHandler(username, password), verify_ssl=verify_ssl)
+    def __init__(self, username, password, login_url, ssl_config=SslConfig()):
+        self.login_http_client = HttpClient(login_url, BasicAuthenticationHandler(username, password), ssl_config=ssl_config)
         self.token = None
         self.is_renewing = False
         self.renewing = Condition()
@@ -105,15 +144,15 @@ class TokenBasedAuthenticationHandler():
 
 class JwtAuthenticationHandler(TokenBasedAuthenticationHandler):
     """ Authenticate via JWT Tokens as implemented in SBB WSG """
-    def __init__(self, username, password, jwt_login_url, verify_ssl=True):
-        super().__init__(username=username, password=password, login_url=jwt_login_url, verify_ssl=verify_ssl)
+    def __init__(self, username, password, jwt_login_url, ssl_config=SslConfig()):
+        super().__init__(username=username, password=password, login_url=jwt_login_url, ssl_config=ssl_config)
         self.request_header_name="Authorization"
         self.response_header_name="Authorization"
 
 class SamlAuthenticationHandler(TokenBasedAuthenticationHandler):
     """ Authenticate via SAML Cookies as implemented in SBB WSG """
-    def __init__(self, username, password, saml_login_url, verify_ssl=True):
-        super().__init__(username=username, password=password, login_url=saml_login_url, verify_ssl=verify_ssl)
+    def __init__(self, username, password, saml_login_url, ssl_config=SslConfig()):
+        super().__init__(username=username, password=password, login_url=saml_login_url,  ssl_config=ssl_config)
         self.request_header_name="Cookie"
         self.response_header_name="Set-Cookie"
 
@@ -125,24 +164,13 @@ class HttpClient:
     - SamlAuthentication: SAML using a specific Login URL and HTTP Set-Cookie and Cookie Headers for use with SBB Webservice Gateway (WSG) - access from outside SBB LAN
     Will retry status code 5xx and if told so by authentication handler max_retries times (default 3 times)"""
 
-    def __init__(self, base_url, authentication_handler=EmptyAuthenticationHandler(), max_retries=3, retry_delay_sec=3, verify_ssl=True):
+    def __init__(self, base_url, authentication_handler=EmptyAuthenticationHandler(), max_retries=3, retry_delay_sec=3, ssl_config=SslConfig()):
         self.base_url = base_url
         self.authentication_handler = authentication_handler
         self.max_retries = max_retries
         self.retry_delay_sec = retry_delay_sec
-        # the feature urlopen with ssl context is only supported from python 3.4.3 onwards
-        if not verify_ssl:
-            if sys.version_info >= (3,4,3):
-                ctx = ssl.create_default_context()
-                ctx.check_hostname = False
-                ctx.verify_mode = ssl.CERT_NONE
-                self.ctx = ctx
-            else:
-                logger.warning("Disabling verify ssl is not supported in python version below 3.4.3. Ignoring configuration, ssl verfication is enabled")
-                self.ctx = None
-        else:
-            # verification activated, default will be fine
-            self.ctx = None
+        self.ssl_config = ssl_config
+        logger.debug("Created http client")
 
     def open_and_read(self, request_path=None):
         response = self.open(request_path)
@@ -183,11 +211,7 @@ class HttpClient:
             return self.base_url
 
     def __open__(self, request):
-        if self.ctx:
-            return urlopen(request, context=self.ctx)
-        else:
-            return urlopen(request)
-
+        return urlopen(request, context=self.ssl_config.ctx)
 
     def __try__log_contents__(self, e):
         try:
