@@ -19,11 +19,11 @@ def create_http_client(base_url, username = None, password = None, jwt_login_url
     ssl_config = ssl_config=SslConfig(verify_ssl, client_cert)
     if jwt_login_url:
         return HttpClient(base_url=base_url,
-                          authentication_handler=JwtAuthenticationHandler(username=username, password=password, jwt_login_url=jwt_login_url, verify_ssl=verify_ssl),
+                          authentication_handler=JwtAuthenticationHandler(username=username, password=password, jwt_login_url=jwt_login_url, ssl_config=ssl_config),
                           ssl_config=ssl_config)
     elif saml_login_url:
         return HttpClient(base_url=base_url,
-                          authentication_handler=SamlAuthenticationHandler(username=username, password=password, saml_login_url=saml_login_url, verify_ssl=verify_ssl),
+                          authentication_handler=SamlAuthenticationHandler(username=username, password=password, saml_login_url=saml_login_url, ssl_config=ssl_config),
                           ssl_config=ssl_config)
     elif username:
         return HttpClient(base_url=base_url,
