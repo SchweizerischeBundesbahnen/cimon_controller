@@ -4,7 +4,6 @@ __author__ = 'florianseidl'
 
 from base64 import b64encode
 from urllib.request import urlopen, HTTPError, URLError, ContentTooShortError, Request
-from urllib.parse import unquote
 from time import sleep
 from threading import Condition
 import logging
@@ -16,7 +15,7 @@ from configutil import decrypt
 logger = logging.getLogger(__name__)
 
 def create_http_client(base_url, username = None, password = None, jwt_login_url= None, saml_login_url=None, verify_ssl=True, client_cert=None):
-    ssl_config = ssl_config=SslConfig(verify_ssl, client_cert)
+    ssl_config = SslConfig(verify_ssl, client_cert)
     if jwt_login_url:
         return HttpClient(base_url=base_url,
                           authentication_handler=JwtAuthenticationHandler(username=username, password=password, jwt_login_url=jwt_login_url, ssl_config=ssl_config),
@@ -36,7 +35,6 @@ def create_http_client(base_url, username = None, password = None, jwt_login_url
 #
 # Currently includes a HTTP Client with handlers for different kinds of authentication
 #
-
 def configure_client_cert(config, key=None):
     if not config:
         return None

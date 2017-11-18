@@ -37,16 +37,18 @@ class CimonTest(TestCase):
                         another_mock={"nice" : None })
 
     def test_run_2_collector_same_type_1_output_1_status(self):
-        c = Cimon(collectors = tuple((self.__mock_collector__("mock", {"a" : { "b" : "c", "e": "f"}}), self.__mock_collector__("mock", {"x" : { "y" : "z"}}))),
+        c = Cimon(collectors = tuple((self.__mock_collector__("mock", {("mock","a") : { "b" : "c", "e": "f"}}),
+                                      self.__mock_collector__("mock", {("mock","x") : { "y" : "z"}}))),
                   outputs = tuple((self.__mock_output__(),)))
         c.run()
-        c.outputs[0].on_update.assert_called_once_with({"mock" : {"a" : { "b" : "c", "e": "f"}, "x" : { "y" : "z"} }})
+        c.outputs[0].on_update.assert_called_once_with({("mock","a") : { "b" : "c", "e": "f"}, ("mock","x") : { "y" : "z"}})
 
     def test_run_2_collector_same_type_1_output_1_status_overwrrite(self):
-        c = Cimon(collectors = tuple((self.__mock_collector__("mock", {"a" : { "b" : "c"}}), self.__mock_collector__("mock", {"a" : { "b" : "x"}}))),
+        c = Cimon(collectors = tuple((self.__mock_collector__("mock", {("mock","a") : { "b" : "c"}}),
+                                      self.__mock_collector__("mock", {("mock","a") : { "b" : "x"}}))),
                   outputs = tuple((self.__mock_output__(),)))
         c.run()
-        c.outputs[0].on_update.assert_called_once_with({"mock" : {"a" : { "b" : "x"} }})
+        c.outputs[0].on_update.assert_called_once_with({("mock","a") : { "b" : "x"} })
 
     def test_run_1_collector_1_output_status_none(self):
         self.__do_run__(1, mock={})
@@ -66,12 +68,19 @@ class CimonTest(TestCase):
         c.outputs[2].close.assert_called_once_with()
 
 
-    def __do_run__(self, nr_outputs=1, **collector_type_status):
-        c = Cimon(collectors = tuple(self.__mock_collector__(type, status) for type, status in collector_type_status.items()),
+    def __do_run__(self, nr_outputs=1, **collector_status):
+        c = Cimon(collectors = tuple(self.__mock_collector__(name, self.__qualify_status__(name, status)) for name, status in collector_status.items()),
                   outputs = tuple(self.__mock_output__() for x in range(nr_outputs)))
         c.run()
+        status = {}
+        for col in collector_status:
+            status.update(self.__qualify_status__(col, collector_status[col]))
         for output in c.outputs:
-            output.on_update.assert_called_once_with(collector_type_status)
+            output.on_update.assert_called_once_with(status)
+
+    def __qualify_status__(self, col, unqualified_status):
+        return {(col,k):v for k,v in unqualified_status.items()}
+
 
     def __mock_collector__(self, type, status):
         collector = SimpleNamespace()
@@ -91,35 +100,35 @@ class CimonTest(TestCase):
 class CimonOperatingDaysHoursTest(TestCase):
 
     def test_parse_hours_or_days_1(self):
-        self.assertEquals(cimon.__parse_hours_or_days__(1, None), (1, ))
-        self.assertEquals(cimon.__parse_hours_or_days__("1", None), (1, ))
+        self.assertEqual(cimon.__parse_hours_or_days__(1, None), (1, ))
+        self.assertEqual(cimon.__parse_hours_or_days__("1", None), (1, ))
 
     def test_parse_hours_or_days_None(self):
         self.assertIsNone(cimon.__parse_hours_or_days__(None, None))
 
     def test_parse_hours_or_days_4_to_15(self):
-        self.assertEquals(cimon.__parse_hours_or_days__("4-15", None), tuple(range(4, 16)))
+        self.assertEqual(cimon.__parse_hours_or_days__("4-15", None), tuple(range(4, 16)))
 
     def test_parse_hours_or_days_4_5_6(self):
-        self.assertEquals(cimon.__parse_hours_or_days__("4,5,6", None), (4,5,6))
+        self.assertEqual(cimon.__parse_hours_or_days__("4,5,6", None), (4,5,6))
 
     def test_parse_hours_or_days_None(self):
-        self.assertEquals(cimon.__parse_hours_or_days__(None, "0-6"), (0,1,2,3,4,5,6))
+        self.assertEqual(cimon.__parse_hours_or_days__(None, "0-6"), (0,1,2,3,4,5,6))
 
     def test_parse_hours_or_days_None(self):
-        self.assertEquals(cimon.__parse_hours_or_days__("*", "0-6"), (0,1,2,3,4,5,6))
+        self.assertEqual(cimon.__parse_hours_or_days__("*", "0-6"), (0,1,2,3,4,5,6))
 
     def test_parse_hours_or_days_4_5_6_9_to_12(self):
-        self.assertEquals(cimon.__parse_hours_or_days__("4,5,6,9-12", None), (4,5,6,9,10,11,12))
+        self.assertEqual(cimon.__parse_hours_or_days__("4,5,6,9-12", None), (4,5,6,9,10,11,12))
 
     def test_parse_hours_or_days_4_to_6_9_to_12(self):
-        self.assertEquals(cimon.__parse_hours_or_days__("4-6,9-12", None), (4,5,6,9,10,11,12))
+        self.assertEqual(cimon.__parse_hours_or_days__("4-6,9-12", None), (4,5,6,9,10,11,12))
 
     def test_parse_hours_or_days_4_to_6_5_to_9(self):
-        self.assertEquals(cimon.__parse_hours_or_days__("4-6,5-9", None), (4,5,6,7,8,9))
+        self.assertEqual(cimon.__parse_hours_or_days__("4-6,5-9", None), (4,5,6,7,8,9))
 
     def test_parse_hours_or_days_4_to_6_5(self):
-        self.assertEquals(cimon.__parse_hours_or_days__("4-6,5", None), (4,5,6))
+        self.assertEqual(cimon.__parse_hours_or_days__("4-6,5", None), (4,5,6))
 
     def test_parse_hours_or_days_21_to_3(self):
         self.assertRaises(ValueError, cimon.__parse_hours_or_days__,"21-3", None)
@@ -134,11 +143,11 @@ class CimonOperatingDaysHoursTest(TestCase):
 
     def test_parse_hours_or_days_star(self):
         # * should refer to the default
-        self.assertEquals(cimon.__parse_hours_or_days__("*", "42"), (42,))
+        self.assertEqual(cimon.__parse_hours_or_days__("*", "42"), (42,))
 
     def test_parse_hours_or_days_nothing(self):
         # empty string should refer to the default
-        self.assertEquals(cimon.__parse_hours_or_days__("", "42"), (42,))
+        self.assertEqual(cimon.__parse_hours_or_days__("", "42"), (42,))
 
     def test_parse_hours_or_days_minus_2_to_1(self):
         # fails because of split, that is OK
@@ -191,61 +200,61 @@ class CimonOperatingDaysHoursTest(TestCase):
         # is operating hour and operating day
         c = Cimon(operating_hours = tuple(range(0,24)),
         operating_days = tuple(range(0,5)))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 44, 57)), 0)
+        self.assertEqual(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 44, 57)), 0)
 
     def test_sec_to_next_operating_next_day_00(self):
         # thursday 00:00:00, but has to wait until friday 00:00:00
         c = Cimon(operating_hours = tuple(range(0,24)),
                   operating_days = (4,))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 00, 00, 00)), 24*60*60)
+        self.assertEqual(c.sec_to_next_operating(datetime(2016, 5, 12, 00, 00, 00)), 24*60*60)
 
     def test_sec_to_next_operating_next_day_12(self):
         # thursday 12:00:00, but has to wait until friday 00:00:00
         c = Cimon(operating_hours = tuple(range(0,24)),
                   operating_days = (4,))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 00, 00)), 12*60*60)
+        self.assertEqual(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 00, 00)), 12*60*60)
 
     def test_sec_to_next_operating_same_day_16(self):
         # thursday 12:00:00, but has to wait until 16:00:00
         c = Cimon(operating_hours = (16,),
                   operating_days = (3,))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 00, 00)), 4*60*60)
+        self.assertEqual(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 00, 00)), 4*60*60)
 
     def test_sec_to_next_operating_same_day_16_mins_secs(self):
         # thursday 12:07:42, but has to wait until 16:00:00
         c = Cimon(operating_hours = (16,),
                   operating_days = (3,))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), 4*60*60 - 7*60 - 42)
+        self.assertEqual(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), 4*60*60 - 7*60 - 42)
 
     def test_sec_to_next_operating_next_day_12_mins_secs(self):
         # thursday 12:07:42, but has to wait until friday 00:00:00
         c = Cimon(operating_hours = tuple(range(0,24)),
                   operating_days = (4,))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), 12*60*60 - 7*60 - 42)
+        self.assertEqual(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), 12*60*60 - 7*60 - 42)
 
     def test_sec_to_next_operating_next_day_12_6_mins_secs(self):
         # thursday 12:07:42, but has to wait until friday 06:00:00
         c = Cimon(operating_hours = tuple(range(6,22)),
                   operating_days = (4,))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), 18*60*60 - 7*60 - 42)
+        self.assertEqual(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), 18*60*60 - 7*60 - 42)
 
     def test_sec_to_next_operating_rollover_day(self):
         # rollover: thursday 00:00:00, but has to wait until monday 00:00:00
         c = Cimon(operating_hours = tuple(range(0,24)),
                   operating_days = (0,))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 00, 00, 00)), 4*24*60*60)
+        self.assertEqual(c.sec_to_next_operating(datetime(2016, 5, 12, 00, 00, 00)), 4*24*60*60)
 
     def test_sec_to_next_operating_12__6_mins_secs_rollover_day(self):
         # rollover: thursday 12:07:42, but has to wait until tuesday 00:00:00
         c = Cimon(operating_hours = tuple(range(6,22)),
                   operating_days = (1,))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), 4*24*60*60 + 6*60*60 + 11*60*60 + 52*60 + 18)
+        self.assertEqual(c.sec_to_next_operating(datetime(2016, 5, 12, 12, 7, 42)), 4*24*60*60 + 6*60*60 + 11*60*60 + 52*60 + 18)
 
     def test_sec_to_next_operating_rollover_day_weekend(self):
         # rollover: sunday 21:00:00, but has to wait until monday 06:00:00
         c = Cimon(operating_hours = tuple(range(6,21)),
                   operating_days = tuple(range(0,4)))
-        self.assertEquals(c.sec_to_next_operating(datetime(2016, 8, 28, 21, 00, 00)), (3+6)*60*60)
+        self.assertEqual(c.sec_to_next_operating(datetime(2016, 8, 28, 21, 00, 00)), (3+6)*60*60)
 
 class CimonConfigurationTests(TestCase):
 
@@ -254,8 +263,8 @@ class CimonConfigurationTests(TestCase):
         self.assertEqual(len(c.collectors), 1)
         self.assertEqual(len(c.outputs), 1)
         self.assertEqual(c.polling_interval_sec, 10)
-        self.assertEquals(type(c.collectors[0]).__name__, "RotatingBuildCollector")
-        self.assertEquals(type(c.outputs[0]).__name__, "ConsoleOutput")
+        self.assertEqual(type(c.collectors[0]).__name__, "RotatingBuildCollector")
+        self.assertEqual(type(c.outputs[0]).__name__, "ConsoleOutput")
 
     def test_configure_file_invalid_yaml_star(self):
         with self.assertRaises(yaml.YAMLError):

@@ -11,7 +11,6 @@ class ReScheduler:
     """
     Implmeents the main loop of the cimon by re-scheduling the run in the given interval
     """
-
     def __init__(self, method, interval_sec):
         self.__lock= Lock()
         self.__timer = None

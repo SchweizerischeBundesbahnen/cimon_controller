@@ -64,7 +64,7 @@ In order to add your own collector, you need to implement a class within your mo
             pass # close your input, will be called at the start of the cimon application or if pausing. Will be called multiple times.
 
         def collect(self):
-            return {} # query the status from server and put into a dictionary of status results. 
+            return {} # query the status from server and put into a dictionary of status results (tuple of uri and job name to JobStatus object). 
                       # This dictionary is read by the output accuring to the type of collector.
 
 ### Adding an output

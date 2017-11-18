@@ -71,14 +71,14 @@ class TestClewarecontrolClewareAmpel(TestCase):
         self.ampel.display(green=True, flash=True)
         sleep(0.9) # allow for many flashes...
         # should be 9 or 10 calls depending on computing time... usually 10
-        self.assertEquals(self.ampel.__call_clewarecontrol__.call_count, 1)
+        self.assertEqual(self.ampel.__call_clewarecontrol__.call_count, 1)
 
     def test_output_called_display_green_twice(self):
         self.ampel = self.create_cleware_ampel()
         for i in range(0,2):
             self.ampel.display(green=True)
             sleep(0.2)
-        self.assertEquals(1, self.ampel.__call_clewarecontrol__.call_count)
+        self.assertEqual(1, self.ampel.__call_clewarecontrol__.call_count)
         self.ampel.__call_clewarecontrol__.assert_has_calls([call((self.red,False), (self.yellow,False), (self.green,True))])
 
     def test_output_called_display_green_three_times(self):
@@ -86,7 +86,7 @@ class TestClewarecontrolClewareAmpel(TestCase):
         for i in range(0,3):
             self.ampel.display(green=True)
             sleep(0.2)
-        self.assertEquals(1, self.ampel.__call_clewarecontrol__.call_count)
+        self.assertEqual(1, self.ampel.__call_clewarecontrol__.call_count)
 
     def test_flash_on_off_on_off_no_flash_but_same(self):
         self.ampel = self.create_cleware_ampel()
@@ -101,14 +101,14 @@ class TestClewarecontrolClewareAmpel(TestCase):
         for i in range(0,2):
             self.ampel.display(green=True)
             sleep(1)
-        self.assertEquals(2, self.ampel.__call_clewarecontrol__.call_count)
+        self.assertEqual(2, self.ampel.__call_clewarecontrol__.call_count)
 
     def test_output_called_display_green_twice_absolute_every(self):
         self.ampel = self.create_cleware_ampel(absoulte_every_sec=0)
         for i in range(0,2):
             self.ampel.display(green=True)
             sleep(0.2)
-        self.assertEquals(2, self.ampel.__call_clewarecontrol__.call_count)
+        self.assertEqual(2, self.ampel.__call_clewarecontrol__.call_count)
 
     def test_wait_for_display(self):
         self.ampel = self.create_cleware_ampel()
