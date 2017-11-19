@@ -1,6 +1,5 @@
 __author__ = 'florianseidl'
 
-import env
 from jenkinscollector import JenkinsClient, JenkinsCollector
 from collector import HttpClient
 from urllib.request import HTTPError, URLError
@@ -9,7 +8,8 @@ from unittest.mock import MagicMock, Mock
 import os
 from datetime import datetime
 import re
-import json
+from cimon import JobStatus,Health,RequestStatus
+
 
 def read(file_name):
     with open("%s/testdata/%s" % (os.path.dirname(__file__), file_name), encoding='utf-8') as f:
@@ -25,7 +25,7 @@ class TestJenkinsClient(TestCase):
         c = JenkinsClient(HttpClient("http://foo.bar"))
         c.http_client.open_and_read = MagicMock(spec=(""), return_value=self.json_str)
         res = c.latest_build("myjob")
-        self.assertEquals(res, {"foo" : "bar"})
+        self.assertEqual(res, {"foo" : "bar"})
         c.http_client.open_and_read.assert_called_with("/job/myjob/lastBuild/api/json?depth=0")
 
 
@@ -48,7 +48,7 @@ class TestJenkinsCollectorJobs(TestCase):
         col = JenkinsCollector(self.url, job_names= (job_name, ))
         col.jenkins.http_client.open_and_read = mock_open_and_read if mock_open_and_read != None else self.mock_open_and_read
         status = col.collect()
-        self.assertIsNotNone(status[job_name])
+        self.assertIsNotNone(status[("ci.sbb.ch",job_name)])
         return status
 
     def do_collect_jobs_error(self, job_name, error):
@@ -60,60 +60,60 @@ class TestJenkinsCollectorJobs(TestCase):
 
     def test_request_status_ok(self):
         status = self.do_collect_jobs(self.job_name_success)
-        self.assertEqual("ok", status[self.job_name_success]["request_status"])
+        self.assertEqual(RequestStatus.OK, status[("ci.sbb.ch", self.job_name_success)].request_status)
 
     def test_build_result_successs(self):
         status = self.do_collect_jobs(self.job_name_success)
-        self.assertEqual("success", status[self.job_name_success]["result"])
+        self.assertEqual(Health.HEALTHY, status[("ci.sbb.ch", self.job_name_success)].health)
 
     def test_building(self):
         status = self.do_collect_jobs(self.job_name_success)
-        self.assertFalse(status[self.job_name_success]["building"])
+        self.assertFalse(status[("ci.sbb.ch", self.job_name_success)].active)
 
     def test_number(self):
         status = self.do_collect_jobs(self.job_name_success)
-        self.assertEqual(515, status[self.job_name_success]["number"])
+        self.assertEqual(515, status[("ci.sbb.ch", self.job_name_success)].number)
 
     def test_timestamp(self):
         status = self.do_collect_jobs(self.job_name_success)
-        self.assertEqual(datetime(2016, 3, 19, 23, 16, 22, 182000), status[self.job_name_success]["timestamp"])
+        self.assertEqual(datetime(2016, 3, 19, 23, 16, 22, 182000), status[("ci.sbb.ch", self.job_name_success)].timestamp)
 
     def test_culprits(self):
         status = self.do_collect_jobs(self.job_name_failed)
-        self.assertEqual(["Diacon Gilles"], status[self.job_name_failed]["culprits"])
+        self.assertEqual(["Diacon Gilles"], status[("ci.sbb.ch", self.job_name_failed)].names)
 
     def test_build_result_failed(self):
         status = self.do_collect_jobs(self.job_name_failed)
-        self.assertEqual("failure", status[self.job_name_failed]["result"])
+        self.assertEqual(Health.SICK, status[("ci.sbb.ch", self.job_name_failed)].health)
 
     def test_build_result_unstable(self):
         status = self.do_collect_jobs(self.job_name_unstable)
-        self.assertEqual("unstable", status[self.job_name_unstable]["result"])
+        self.assertEqual(Health.UNWELL, status[("ci.sbb.ch", self.job_name_unstable)].health)
 
     def test_build_request_status_error(self):
         status = self.do_collect_jobs_error("foo", HTTPError(self.url, 500, None, None, None))
-        self.assertEqual("error", status["foo"]["request_status"])
+        self.assertEqual(RequestStatus.ERROR, status[("ci.sbb.ch", "foo")].request_status)
 
     def test_build_request_status_not_found(self):
         status = self.do_collect_jobs_error("foo", HTTPError(self.url, 404, None, None, None))
-        self.assertEqual("not_found", status["foo"]["request_status"])
+        self.assertEqual(RequestStatus.NOT_FOUND, status[("ci.sbb.ch", "foo")].request_status)
 
     def test_build_request_status_url_error(self):
         # for instance host not found
         status = self.do_collect_jobs_error("foo", URLError("kaputt"))
-        self.assertEqual("error", status["foo"]["request_status"])
+        self.assertEqual(RequestStatus.ERROR, status[("ci.sbb.ch", "foo")].request_status)
 
     def test_build_result_not_building(self):
         status = self.do_collect_jobs(self.job_name_success)
-        self.assertFalse(status[self.job_name_success]["building"])
+        self.assertFalse(status[("ci.sbb.ch", self.job_name_success)].active)
 
     def test_build_result_building(self):
         status = self.do_collect_jobs(self.job_name_building)
-        self.assertTrue(status[self.job_name_building]["building"])
+        self.assertTrue(status[("ci.sbb.ch", self.job_name_building)].active)
 
     def test_build_result_building_no_result(self):
         status = self.do_collect_jobs(self.job_name_building)
-        self.assertEquals("other", status[self.job_name_building]["result"])
+        self.assertEqual(Health.OTHER, status[("ci.sbb.ch", self.job_name_building)].health)
 
     def test_build_job_first_success_then_building(self):
         col = JenkinsCollector(self.url, job_names= (self.job_name_building, ))
@@ -121,14 +121,14 @@ class TestJenkinsCollectorJobs(TestCase):
         col.jenkins.http_client.open_and_read = MagicMock(spec=(""), return_value = filter(read(self.job_name_building)))
         # first request - not building yet
         status = col.collect()
-        self.assertEquals("success", status[self.job_name_building]["result"])
-        self.assertFalse(status[self.job_name_building]["building"])
+        self.assertEqual(Health.HEALTHY, status[("ci.sbb.ch", self.job_name_building)].health)
+        self.assertFalse(status[("ci.sbb.ch", self.job_name_building)].active)
 
         # second request - building now
         col.jenkins.http_client.open_and_read = MagicMock(spec=(""), return_value = read(self.job_name_building))
         status = col.collect()
-        self.assertEquals("success", status[self.job_name_building]["result"])
-        self.assertTrue(status[self.job_name_building]["building"])
+        self.assertEqual(Health.HEALTHY, status[("ci.sbb.ch", self.job_name_building)].health)
+        self.assertTrue(status[("ci.sbb.ch", self.job_name_building)].active)
         return col
 
     def test_build_job_first_success_then_building_then_falied(self):
@@ -138,8 +138,8 @@ class TestJenkinsCollectorJobs(TestCase):
         filter=lambda x : x.replace("\"building\":true", "\"building\":false").replace("\"result\":null", "\"result\":\"FAILURE\"")
         col.jenkins.http_client.open_and_read = MagicMock(spec=(""), return_value = filter(read(self.job_name_building)))
         status = col.collect()
-        self.assertEquals("failure", status[self.job_name_building]["result"])
-        self.assertFalse(status[self.job_name_building]["building"])
+        self.assertEqual(Health.SICK, status[("ci.sbb.ch", self.job_name_building)].health)
+        self.assertFalse(status[("ci.sbb.ch", self.job_name_building)].active)
 
 
 class TestJenkinsCollectorViews(TestCase):
@@ -178,55 +178,55 @@ class TestJenkinsCollectorViews(TestCase):
 
     def test_collect_views_count_failure(self):
         build = self.do_collect_views(66, view_name=self.view_name_1)
-        self.assertEquals(4, len([k for (k, v) in build.items() if "result" in v and v["result"] == "failure"]))
+        self.assertEqual(4, len([k for (k, v) in build.items() if v.health == Health.SICK]))
 
     def test_collect_views_count_success(self):
         build = self.do_collect_views(66, view_name=self.view_name_1)
-        self.assertEquals(62, len([k for (k, v) in build.items() if "result" in v and v["result"] == "success"]))
+        self.assertEqual(62, len([k for (k, v) in build.items() if v.health == Health.HEALTHY]))
 
     def test_collect_views_count_unstabe(self):
         build = self.do_collect_views(9, view_name=self.view_name_2)
-        self.assertEquals(4, len([k for (k, v) in build.items() if "result" in v and v["result"] == "unstable"]))
+        self.assertEqual(4, len([k for (k, v) in build.items() if v.health == Health.UNWELL]))
 
     def test_collect_views_count_success_2(self):
         build = self.do_collect_views(9, view_name=self.view_name_2)
-        self.assertEquals(5, len([k for (k, v) in build.items() if "result" in v and v["result"] == "success"]))
+        self.assertEqual(5, len([k for (k, v) in build.items() if v.health == Health.HEALTHY]))
 
     def test_collect_views_count_disabled(self):
         build = self.do_collect_views(10, view_name=self.view_name_3)
-        self.assertEquals(1, len([k for (k, v) in build.items() if v["request_status"] == "not_found"]))
+        self.assertEqual(1, len([k for (k, v) in build.items() if v.request_status == RequestStatus.NOT_FOUND]))
 
     def test_collect_views_count_success_3(self):
         build = self.do_collect_views(10, view_name=self.view_name_3)
-        self.assertEquals(9, len([k for (k, v) in build.items() if "result" in v and v["result"] == "success"]))
+        self.assertEqual(9, len([k for (k, v) in build.items() if v.health == Health.HEALTHY]))
 
     def test_build_request_status_http_error(self):
         status = self.do_collect_views_error(1, "foo", HTTPError("", 500, "kaputt", None, None))
-        self.assertEqual(status["foo"]["request_status"], "error")
+        self.assertEqual(status[("ci.sbb.ch", "foo")].request_status, RequestStatus.ERROR)
 
     def test_collect_view_building(self):
         build = self.do_collect_views(22, view_name=self.view_name_building)
-        self.assertEquals(6, len([k for (k, v) in build.items() if "building" in v and v["building"]]))
+        self.assertEqual(6, len([k for (k, v) in build.items() if v.active]))
 
     def test_collect_view_with_numbers(self):
         build = self.do_collect_views(6, view_name=self.view_name_depth_2)
-        self.assertEquals(4, len([k for (k, v) in build.items() if "number" in v and v["number"]]))
+        self.assertEqual(4, len([k for (k, v) in build.items() if v.number]))
 
     def test_collect_view_with_timestamp(self):
         build = self.do_collect_views(6, view_name=self.view_name_depth_2)
-        self.assertEquals(4, len([k for (k, v) in build.items() if "timestamp" in v and v["timestamp"]]))
+        self.assertEqual(4, len([k for (k, v) in build.items() if v.timestamp]))
 
     def test_collect_view_with_culprits(self):
         build = self.do_collect_views(6, view_name=self.view_name_depth_2)
-        self.assertEquals(3, len([k for (k, v) in build.items() if "culprits" in v and v["culprits"]]))
+        self.assertEqual(3, len([k for (k, v) in build.items() if v.names]))
 
     def test_collect_view_without_numbers(self):
         build = self.do_collect_views(66, view_name=self.view_name_1)
-        self.assertEquals(0, len([k for (k, v) in build.items() if "number" in v and v["number"]]))
+        self.assertEqual(0, len([k for (k, v) in build.items() if v.number]))
 
     def test_build_result_view_not_building(self):
         build = self.do_collect_views(22, view_name=self.view_name_building)
-        self.assertEquals(0, len([k for (k, v) in build.items() if "buidling" in v and v["building"]]))
+        self.assertEqual(6, len([k for (k, v) in build.items() if v.active]))
 
 class TestJenkinsCollectorNestedViews(TestCase):
     view_name_nested = "mvp/view/zvs-drittgeschaeft"
@@ -260,7 +260,7 @@ class TestJenkinsCollectorJobsAndViews(TestCase):
         }
         col.jenkins.http_client.open_and_read = Mock(spec=(""), side_effect=lambda x : [content_by_key[k] for k in content_by_key if k in x][0])
         status = col.collect()
-        self.assertEquals(11, len(status))
+        self.assertEqual(11, len(status))
 
 if __name__ == '__main__':
     main()

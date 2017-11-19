@@ -108,35 +108,35 @@ class EnergenieTest(TestCase):
     def test_no_command(self):
         e = self.create_energenie()
         e.switch([])
-        self.assertEquals(0, e.__call_sispmctl__.call_count)
+        self.assertEqual(0, e.__call_sispmctl__.call_count)
 
     def test_two_same_calls(self):
         e = self.create_energenie()
         for i in range(0,2):
             e.switch([(1,False), (2,False), (3,True), (4,False)])
         e.__call_sispmctl__.assert_called_once_with((1, False),(2, False), (3, True), (4, False))
-        self.assertEquals(1, e.__call_sispmctl__.call_count)
+        self.assertEqual(1, e.__call_sispmctl__.call_count)
 
     def test_two_different_calls(self):
         e = self.create_energenie()
         e.switch([(1,False), (2,False), (3,True), (4,False)])
         e.switch([(1,False), (2,True), (3,False), (4,False)])
         e.__call_sispmctl__.assert_called_with((1, False),(2, True), (3, False), (4, False))
-        self.assertEquals(2, e.__call_sispmctl__.call_count)
+        self.assertEqual(2, e.__call_sispmctl__.call_count)
 
     def test_four_same_calls(self):
         e = self.create_energenie()
         for i in range(0,4):
             e.switch([(1,False), (2,False), (3,True), (4,False)])
         e.__call_sispmctl__.assert_called_with((1, False),(2, False), (3, True), (4, False))
-        self.assertEquals(2, e.__call_sispmctl__.call_count)
+        self.assertEqual(2, e.__call_sispmctl__.call_count)
 
     def test_seven_same_calls(self):
         e = self.create_energenie()
         for i in range(0,7):
             e.switch([(1,False), (2,True), (3,False), (4,False)])
         e.__call_sispmctl__.assert_called_with((1, False),(2, True), (3, False), (4, False))
-        self.assertEquals(3, e.__call_sispmctl__.call_count)
+        self.assertEqual(3, e.__call_sispmctl__.call_count)
 
     def test_three_different_calls(self):
         e = self.create_energenie()
@@ -144,7 +144,7 @@ class EnergenieTest(TestCase):
         e.switch([(1,False), (2,True), (3,False), (4,False)])
         e.switch([(1,False), (2,False), (3,True), (4,False)])
         e.__call_sispmctl__.assert_called_with((1, False),(2, False), (3, True), (4, False))
-        self.assertEquals(3, e.__call_sispmctl__.call_count)
+        self.assertEqual(3, e.__call_sispmctl__.call_count)
 
     def test_two_same_calls_repeat_every_time_0(self):
         self.do_two_same_calls_repeat_every_time(0)
@@ -159,7 +159,7 @@ class EnergenieTest(TestCase):
         e = self.create_energenie(repeat_every=repeat_every)
         for i in range(0,2):
             e.switch([(1,False), (2,False), (3,True), (4,False)])
-        self.assertEquals(2, e.__call_sispmctl__.call_count)
+        self.assertEqual(2, e.__call_sispmctl__.call_count)
 
     def create_energenie(self, repeat_every=3):
         e = Energenie(repeat_every=repeat_every)

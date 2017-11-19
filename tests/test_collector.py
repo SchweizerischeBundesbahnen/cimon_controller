@@ -1,10 +1,9 @@
 __author__ = 'florianseidl'
 
-import env
 from collector import *
-from urllib.request import HTTPError, URLError
-from unittest import TestCase, main
-from unittest.mock import MagicMock, Mock, DEFAULT
+from urllib.request import HTTPError
+from unittest import TestCase
+from unittest.mock import Mock, DEFAULT
 from types import SimpleNamespace
 from concurrent import futures
 
@@ -15,7 +14,7 @@ class TestHttpClient(TestCase):
 
     def test_ok(self):
         h = self.create_http_client("foobar42")
-        self.assertEquals(h.open_and_read("http://irgendw.as"), "foobar42")
+        self.assertEqual(h.open_and_read("http://irgendw.as"), "foobar42")
         self.assertEqual(h.__open__.call_count, 1)
 
     def test_http_exception_500(self):
@@ -71,7 +70,7 @@ class TestHttpClient(TestCase):
         self.assertEqual(h.__open__.call_count, 2)
         self.assertEqual(saml.login_http_client.__open__.call_count, 2)
         request = self.__get_request__(h.__open__)
-        self.assertEquals(request.get_header("Cookie"), "bla")
+        self.assertEqual(request.get_header("Cookie"), "bla")
 
     def test_saml_mulitthreading(self):
         saml = SamlAuthenticationHandler("irgendwer", "geheim", "")
@@ -84,7 +83,7 @@ class TestHttpClient(TestCase):
         self.assertEqual(h.__open__.call_count, 43)
         self.assertEqual(saml.login_http_client.__open__.call_count, 2)
         request = self.__get_request__(h.__open__)
-        self.assertEquals(request.get_header("Cookie"), "bla")
+        self.assertEqual(request.get_header("Cookie"), "bla")
 
 
     def test_saml_http_exception_401_saml_no_cookie_sent(self):
@@ -104,7 +103,7 @@ class TestHttpClient(TestCase):
         self.assertEqual(h.__open__.call_count, 2)
         self.assertEqual(jwt.login_http_client.__open__.call_count, 2)
         request = self.__get_request__(h.__open__)
-        self.assertEquals(request.get_header("Authorization"), "bla")
+        self.assertEqual(request.get_header("Authorization"), "bla")
 
     def create_http_client(self, response_str="", http_error_codes=None, authentication_handler=EmptyAuthenticationHandler(), header=None):
         h = HttpClient(base_url="http://irgendw.as",

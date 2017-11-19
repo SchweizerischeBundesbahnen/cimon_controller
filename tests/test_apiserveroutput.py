@@ -1,17 +1,13 @@
 __author__ = 'florianseidl'
 
 import env
-from apiserveroutput import *
-import apiserveroutput
-from output import BuildFilter
-from unittest import TestCase
-from unittest.mock import MagicMock, Mock
-from types import SimpleNamespace
-from datetime import datetime
-import yaml
-import os
 import collections
-import json
+import os
+from types import SimpleNamespace
+from unittest import TestCase
+
+import apiserveroutput
+from apiserveroutput import *
 
 class TestApiServerOutput(TestCase):
     job_name_success = "mvp.mct.vermittler-produkt.continuous"
@@ -22,8 +18,7 @@ class TestApiServerOutput(TestCase):
 
     def setUp(self):
         apiserveroutput.server = SimpleNamespace() # pretend there is an http server to avioid starting one
-        apiserveroutput.set_shared_status({})
-        apiserveroutput.views = apiserveroutput.default_views
+        set_shared_status({})
 
     def create(self):
         return ApiServerOutput(), ApiServer()
@@ -34,9 +29,9 @@ class TestApiServerOutput(TestCase):
 
     def do_test_query_jobs_from_api(self, job_name, values):
         out, api = self.create()
-        out.on_update({"build" :  { job_name : values }})
+        out.on_update({ ("ci.sbb.ch", job_name) : values })
         result = api.handle_get("/job/%s/lastBuild/api/json?depth=0" % job_name)
-        self.assertEquals(result[0], 200)
+        self.assertEqual(result[0], 200)
         self.assert_all_in_original_job(job_name, result[1])
 
     def assert_all_in_original_job(self, job_name, api_response):
@@ -62,7 +57,7 @@ class TestApiServerOutput(TestCase):
                 else:
                     self.assertIn(value, original_part)
         else:
-            self.assertEquals(api_response_part, original_part)
+            self.assertEqual(api_response_part, original_part)
 
     def __find_partial_dict_in_list__(self, partial, list_of_dicts):
         for d in list_of_dicts:
@@ -73,126 +68,124 @@ class TestApiServerOutput(TestCase):
         return False
 
     def test_request_status_ok(self):
-        self.do_test_query_jobs_from_api(self.job_name_success, {"request_status" : "ok", "result" : "success"})
+        JobStatus(RequestStatus.OK, Health.HEALTHY)
+        self.do_test_query_jobs_from_api(self.job_name_success, JobStatus(RequestStatus.OK, Health.HEALTHY))
 
     def test_request_status_failed(self):
-        self.do_test_query_jobs_from_api(self.job_name_failed, {"request_status" : "ok", "result" : "failure"})
+        self.do_test_query_jobs_from_api(self.job_name_failed, JobStatus(RequestStatus.OK, Health.SICK))
 
     def test_request_status_unstable(self):
-        self.do_test_query_jobs_from_api(self.job_name_unstable, {"request_status" : "ok", "result" : "unstable"})
-
-    def test_request_building_false(self):
-        self.do_test_query_jobs_from_api(self.job_name_success, {"request_status" : "ok", "result" : "success", "building" : False})
+        self.do_test_query_jobs_from_api(self.job_name_unstable, JobStatus(RequestStatus.OK, Health.UNWELL))
 
     def test_request_building_true(self):
-        self.do_test_query_jobs_from_api(self.job_name_building, {"request_status" : "ok", "result" : None, "building" : True})
+        self.do_test_query_jobs_from_api(self.job_name_building, JobStatus(RequestStatus.OK, Health.OTHER, True))
 
     def test_request_number(self):
-        self.do_test_query_jobs_from_api(self.job_name_success, {"request_status" : "ok", "result" : "success", "number" : 515})
+        self.do_test_query_jobs_from_api(self.job_name_success, JobStatus(RequestStatus.OK, Health.HEALTHY, number=515))
 
     def test_request_culprits(self):
-        self.do_test_query_jobs_from_api(self.job_name_failed, {"request_status" : "ok", "result" : "failure", "culprits" : ["Diacon Gilles"]})
+        self.do_test_query_jobs_from_api(self.job_name_failed, JobStatus(RequestStatus.OK, Health.SICK, names=["Diacon Gilles"]))
 
     def test_request_timestamp(self):
-        self.do_test_query_jobs_from_api(self.job_name_failed, {"request_status" : "ok", "result" : "failure", "timestamp": datetime.fromtimestamp(1458426704.059) })
+        self.do_test_query_jobs_from_api(self.job_name_failed, JobStatus(RequestStatus.OK, Health.SICK, timestamp=datetime.fromtimestamp(1458426704.059)))
 
     def test_request_all(self):
-        self.do_test_query_jobs_from_api(self.job_name_failed, {"request_status" : "ok", "result" : "failure", "building" : False, "culprits" : ["Diacon Gilles"], "timestamp": datetime.fromtimestamp(1458426704.059), "number" : 554})
+        self.do_test_query_jobs_from_api(self.job_name_failed, JobStatus(RequestStatus.OK, Health.SICK, active=False, names=["Diacon Gilles"], timestamp=datetime.fromtimestamp(1458426704.059), number=554))
 
     def test_not_found(self):
         out, api = self.create()
-        out.on_update({"build" :  { self.job_name_success : {"request_status" : "ok", "result" : "success", "building" : False} }})
+        out.on_update({("ci.sbb.ch",self.job_name_success) : JobStatus(RequestStatus.OK, Health.HEALTHY)})
         result = api.handle_get("/job/gibtsgarnicht/lastBuild/api/json?depth=0" )
-        self.assertEquals(result[0], 404)
+        self.assertEqual(result[0], 404)
 
     def test_not_found_in_result(self):
         out, api = self.create()
-        out.on_update({"build" :  { self.job_name_success : {"request_status" : "not_found" } }})
+        out.on_update({("ci.sbb.ch",self.job_name_success) : JobStatus(RequestStatus.NOT_FOUND)})
         result = api.handle_get("/job/%s/lastBuild/api/json?depth=0"% self.job_name_success )
-        self.assertEquals(result[0], 404)
+        self.assertEqual(result[0], 404)
 
     def test_error_in_result(self):
         out, api = self.create()
-        out.on_update({"build" :  { self.job_name_success : {"request_status" : "error"} }})
+        out.on_update({("ci.sbb.ch",self.job_name_success) : JobStatus(RequestStatus.ERROR)})
         result = api.handle_get("/job/%s/lastBuild/api/json?depth=0"% self.job_name_success )
-        self.assertEquals(result[0], 500)
+        self.assertEqual(result[0], 500)
 
     def test_error_in_result_all(self):
         out, api = self.create()
-        out.on_update({"build" :  { "all" : {"request_status" : "error"} }})
+        out.on_update({("ci.sbb.ch","all") : JobStatus(RequestStatus.ERROR)})
         result = api.handle_get("/job/%s/lastBuild/api/json?depth=0"% self.job_name_success )
-        self.assertEquals(result[0], 500)
+        self.assertEqual(result[0], 500)
 
     def test_view_all(self):
         out, api = self.create()
-        out.on_update({"build" :  { "pz.tip.app.continuous" : {"request_status" : "ok", "result" : "success"} }})
+        out.on_update({("ci.sbb.ch","pz.tip.app.continuous") : JobStatus(RequestStatus.OK, Health.HEALTHY)})
         result = api.handle_get("/view/all/api/json?depth=0")
-        self.assertEquals(result[0], 200)
-        self.assertEquals(1, len(result[1]["jobs"]))
+        self.assertEqual(result[0], 200)
+        self.assertEqual(1, len(result[1]["jobs"]))
         self.assert_all_in_original_view(self.view_name_3, result[1])
 
     def test_view_all_2_builds(self):
         out, api = self.create()
-        out.on_update({"build" :  { "pz.tip.app.continuous" : {"request_status" : "ok", "result" : "success"},
-                                    "pz.tip.app.nightly" : {"request_status" : "ok", "result" : "success"} }})
+        out.on_update({("ci.sbb.ch","pz.tip.app.continuous") : JobStatus(RequestStatus.OK, Health.HEALTHY),
+                       ("ci.sbb.ch","pz.tip.app.nightly") : JobStatus(RequestStatus.OK, Health.HEALTHY)})
         result = api.handle_get("/view/all/api/json?depth=0")
-        self.assertEquals(result[0], 200)
-        self.assertEquals(2, len(result[1]["jobs"]))
+        self.assertEqual(result[0], 200)
+        self.assertEqual(2, len(result[1]["jobs"]))
         self.assert_all_in_original_view(self.view_name_3, result[1])
 
     def test_view_not_found(self):
         out, api = self.create()
-        out.on_update({"build" :  { "pz.tip.app.continuous" : {"request_status" : "ok", "result" : "success"} }})
+        out.on_update({("ci.sbb.ch","pz.tip.app.continuous") : JobStatus(RequestStatus.OK, Health.HEALTHY)})
         result = api.handle_get("/view/gibtsgarnicht/api/json?depth=0")
-        self.assertEquals(result[0], 404)
+        self.assertEqual(result[0], 404)
 
     def test_view_error_job(self):
         out, api = self.create()
-        out.on_update({"build" :  { "pz.tip.app.continuous" : {"request_status" : "error" } }})
+        out.on_update({("ci.sbb.ch","pz.tip.app.continuous") : JobStatus(RequestStatus.ERROR)})
         result = api.handle_get("/view/all/api/json?depth=0")
-        self.assertEquals(result[0], 200)
-        self.assertEquals(result[1], {'description': None, 'jobs': [{'name': 'pz.tip.app.continuous', 'color': 'disabled'}]})
+        self.assertEqual(result[0], 200)
+        self.assertEqual(result[1], {'description': None, 'jobs': [{'name': 'pz.tip.app.continuous', 'color': 'disabled'}]})
 
     def test_view_no_job(self):
         out, api = self.create()
-        out.on_update({"build" :  {} } )
+        out.on_update({})
         result = api.handle_get("/view/all/api/json?depth=0")
-        self.assertEquals(result[0], 200)
-        self.assertEquals(0, len(result[1]["jobs"]))
+        self.assertEqual(result[0], 200)
+        self.assertEqual(0, len(result[1]["jobs"]))
 
     def test_view_all_error(self):
         out, api = self.create()
-        out.on_update({"build" :  { "all" : {"request_status" : "error" } }})
+        out.on_update({("ci.sbb.ch","all") : JobStatus(RequestStatus.ERROR)})
         result = api.handle_get("/view/all/api/json?depth=0")
-        self.assertEquals(result[0], 500)
+        self.assertEqual(result[0], 500)
 
     def test_view_configured_2_builds(self):
-        apiserveroutput.views.update({"confiview" : BuildFilter(".*\.nightly")})
+        views.update({"confiview" : re.compile(".*\.nightly")})
         out, api = self.create()
-        out.on_update({"build" :  { "pz.tip.app.continuous" : {"request_status" : "ok", "result" : "success"},
-                                    "pz.tip.app.nightly" : {"request_status" : "ok", "result" : "success"} }})
+        out.on_update({("ci.sbb.ch","pz.tip.app.continuous") : JobStatus(RequestStatus.OK, Health.HEALTHY),
+                       ("ci.sbb.ch","pz.tip.app.nightly") : JobStatus(RequestStatus.OK, Health.HEALTHY)})
         result = api.handle_get("/view/confiview/api/json?depth=0")
-        self.assertEquals(result[0], 200)
-        self.assertEquals(1, len(result[1]["jobs"]))
+        self.assertEqual(result[0], 200)
+        self.assertEqual(1, len(result[1]["jobs"]))
         self.assert_all_in_original_view(self.view_name_3, result[1])
 
     def test_view_configured_2_builds_match_none(self):
-        apiserveroutput.views.update({"confiview" : BuildFilter("hotzenplotz") })
+        views.update({"confiview" : re.compile("hotzenplotz")})
         out, api = self.create()
-        out.on_update({"build" :  { "pz.tip.app.continuous" : {"request_status" : "ok", "result" : "success"},
-                                    "pz.tip.app.nightly" : {"request_status" : "ok", "result" : "success"} }})
+        out.on_update({("ci.sbb.ch","pz.tip.app.continuous") : JobStatus(RequestStatus.OK, Health.HEALTHY),
+                       ("ci.sbb.ch","pz.tip.app.nightly") : JobStatus(RequestStatus.OK, Health.HEALTHY)})
         result = api.handle_get("/view/confiview/api/json?depth=0")
-        self.assertEquals(result[0], 200)
-        self.assertEquals(0, len(result[1]["jobs"]))
+        self.assertEqual(result[0], 200)
+        self.assertEqual(0, len(result[1]["jobs"]))
 
     def test_view_configured_2_builds_and_all(self):
-        apiserveroutput.views.update({"confiview" : BuildFilter(".*\.nightly")})
+        views.update({"confiview" : re.compile(".*\.nightly")})
         out, api = self.create()
-        out.on_update({"build" :  { "pz.tip.app.continuous" : {"request_status" : "ok", "result" : "success"},
-                                    "pz.tip.app.nightly" : {"request_status" : "ok", "result" : "success"} }})
+        out.on_update({("ci.sbb.ch","pz.tip.app.continuous") : JobStatus(RequestStatus.OK, Health.HEALTHY),
+                       ("ci.sbb.ch","pz.tip.app.nightly") : JobStatus(RequestStatus.OK, Health.HEALTHY)})
         result = api.handle_get("/view/confiview/api/json?depth=0")
-        self.assertEquals(result[0], 200)
-        self.assertEquals(1, len(result[1]["jobs"]))
+        self.assertEqual(result[0], 200)
+        self.assertEqual(1, len(result[1]["jobs"]))
         result = api.handle_get("/view/all/api/json?depth=0")
-        self.assertEquals(result[0], 200)
-        self.assertEquals(2, len(result[1]["jobs"]))
+        self.assertEqual(result[0], 200)
+        self.assertEqual(2, len(result[1]["jobs"]))

@@ -14,6 +14,7 @@ import signal
 from datetime import datetime, timedelta, time
 from argparse import ArgumentParser
 from copy import deepcopy
+from enum import Enum
 
 # The Masterboxcontrolprogram of the ci monitor scripts.
 #
@@ -45,9 +46,38 @@ sys.path.append("%s/cimon/plugins" % os.path.expanduser("~"))
 
 logger = logging.getLogger(__name__)
 
+class RequestStatus(Enum):
+    OK = 1
+    NOT_FOUND = 2
+    ERROR = 3
+
+class Health(Enum):
+    HEALTHY = 1
+    UNWELL = 2
+    SICK = 3
+    OTHER = 4
+    UNDEFINED = 5
+
+class JobStatus():
+    def __init__(self,
+                 request_status=RequestStatus.OK,
+                 health=Health.OTHER,
+                 active=False,
+                 timestamp=None,
+                 number=None,
+                 names=None):
+        self.request_status = request_status
+        self.health = health
+        self.active = active
+        self.timestamp = timestamp
+        self.number=number
+        self.names=names
+
+    def __repr__(self):
+        return str(self.__dict__)
+
 class Cimon():
     """ Start and configuration of the build monitor """
-
     def __init__(self,
                  polling_interval_sec=0,
                  collectors=tuple(),
@@ -101,8 +131,7 @@ class Cimon():
         # first collect the current status
         status = {}
         for collector in self.collectors:
-            status[collector.type] = status[collector.type] if collector.type in status else {}
-            status[collector.type].update(collector.collect())
+            status.update(collector.collect())
         logger.debug("Collected status: %s", status)
         # then display the current status
         for output in self.outputs:

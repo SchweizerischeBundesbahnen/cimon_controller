@@ -1,4 +1,3 @@
-__author__ = 'florianseidl'
 # Copyright (C) Schweizerische Bundesbahnen SBB, 2016
 # Python 3.4
 __author__ = 'florianseidl'
@@ -11,7 +10,8 @@ import sys
 from threading import Thread, RLock
 from time import sleep
 from datetime import datetime
-from output import BuildFilter
+from output import NameFilter
+from cimon import JobStatus,RequestStatus,Health
 
 # Template for an output. For ampel type output with 3 or less lights or signals, use myampeloutput template instead.
 # copy and add your functionality
@@ -20,18 +20,19 @@ logger = logging.getLogger(__name__)
 
 default_host = "localhost"
 default_port = 8080
-default_views = {"all" : BuildFilter(".*")}
+default_views = {"all" : re.compile(r'.*')}
 
 def create(configuration, key=None):
     """Create an instance (called by cimon.py)"""
-    global host, port, created, views
+    global host, port, created, views, collector_filter
     if created: # safeguard against double creation since we use global variables
         raise ValueError("There is allready one API server configured, only one is allwowed")
     host = configuration.get("host", default_host)
     port = configuration.get("port", default_port)
+    collector_filter = NameFilter(configuration["collectorFilterPattern"]) if "collectorFilterPattern" in configuration else NameFilter()
     views_from_config = configuration.get("views", {}) # view: pattern
     for view_name, pattern in views_from_config.items():
-        views[view_name] =  BuildFilter(pattern) if pattern else BuildFilter(".*")
+        views[view_name] =  re.compile(pattern if pattern else r'.*')
     created = True
     return ApiServerOutput()
 
@@ -41,6 +42,7 @@ port = default_port
 __shared_status__ = {}
 server = None
 server_lock = RLock()
+collector_filter=NameFilter()
 views=default_views
 
 def start_http_server_if_not_started():
@@ -77,14 +79,12 @@ class ApiServerOutput():
     """Template for your own output device."""
 
     def on_update(self, status):
-        """Display the given status.
-        Status is a dict of status type, for instance { 'build' : {"<job_name_1>": {"request_status" : "error" | "not_found" | "ok", "result" : "failure" | "unstable" | "other" | "success"},
-                                                                    "<job_name_2>": {...},
-                                                                    ...}
-                                                       }
-        """
         start_http_server_if_not_started()
-        set_shared_status(status)
+        set_shared_status(self.filter_status_by_collector(status))
+
+    def filter_status_by_collector(self, status):
+        filtered = collector_filter.filter_status(status)
+        return {k[1]:v for k,v in filtered.items()}
 
     def close(self):
         stop_http_server()
@@ -95,75 +95,76 @@ class ApiServer():
     job_request_pattern = re.compile("/job/([\w\.-]*)/lastBuild/api/json.*")
     view_request_pattern = re.compile("/view/([\w\.-\/]*)/api/json.*")
 
-    result_to_color = {"failure" : "red",
-                        "unstable" : "yellow",
-                        "success" : "blue"}
+    result_to_color = {Health.SICK  : "red",
+                       Health.UNWELL : "yellow",
+                       Health.HEALTHY      : "blue"}
 
+    health_to_jenkins_status = {Health.SICK  : "FAILURE",
+                                Health.UNWELL : "UNSTABLE",
+                                Health.HEALTHY      : "SUCCESS"}
 
     def handle_get(self, path):
         try:
             status = get_shared_status()
-            if "build" in status:
-                if "all" in status["build"] and status["build"]["all"]["request_status"] == "error":
-                   return (500, "Error requesting any job")
-                else:
-                    job_match = self.job_request_pattern.match(path)
-                    if job_match and len(job_match.groups()) > 0:
-                        return self.handle_job(job=job_match.group(1), build_status=status["build"])
-                    else:
-                        view_match = self.view_request_pattern.match(path)
-                        if view_match and len(view_match.groups()) > 0:
-                            return self.handle_view(view=view_match.group(1), build_status=status["build"])
-                        else:
-                            return (404, 'Path "%s" is not handled.' % path)
+            if "all" in status and status["all"].request_status == RequestStatus.ERROR:
+               return (500, "Error requesting any job")
             else:
-                return (500, "No build status available at all (maybe this is cimon does not collect build status?)")
+                job_match = self.job_request_pattern.match(path)
+                if job_match and len(job_match.groups()) > 0:
+                    return self.handle_job(job=job_match.group(1), status=status)
+                else:
+                    view_match = self.view_request_pattern.match(path)
+                    if view_match and len(view_match.groups()) > 0:
+                        return self.handle_view(view=view_match.group(1), status=status)
+                    else:
+                        return (404, 'Path "%s" is not handled.' % path)
         except Exception:
             logging.error("Error handing HTTP Request", exc_info=True)
             return (500, str(sys.exc_info()))
 
-    def handle_job(self, job, build_status):
-        if job in build_status and build_status[job]["request_status"] == "ok":
-            return (200, self.__to_jenkins_job_result__(build_status[job]))
-        elif job in build_status and build_status[job]["request_status"] == "error":
+    def handle_job(self, job, status):
+        if job in status and status[job].request_status == RequestStatus.OK:
+            return (200, self.__to_jenkins_job_result__(status[job]))
+        elif job in status and status[job].request_status == RequestStatus.ERROR:
             return (500, 'Error requesting job "%s"' % job)
-        elif job in build_status and build_status[job]["request_status"] == "not_found":
-            return (404, "Request status %s" % build_status[job]["request_status"])
+        elif job in status and status[job].request_status == RequestStatus.NOT_FOUND:
+            return (404, "Not found for job %s" % job)
         else:
             return (404, 'Unkonwn build job "%s"' % job)
 
-    def handle_view(self, view, build_status):
+    def handle_view(self, view, status):
         if view in views:
-            return (200, self.__to_jenkins_view_result__(views[view].filter_build_status(build_status)))
+            filteredView = {k: v for k, v in status.items() if views[view].match(k)}
+            return (200, self.__to_jenkins_view_result__(filteredView))
         else:
             return (404, 'Unknown view "%s"' % view)
 
-    def __to_jenkins_job_result__(self, build_result):
+    def __to_jenkins_job_result__(self, job_status):
         jenkins_response = {
-            "result" : build_result["result"].upper() if build_result["result"] in ("success", "failure", "unstable") else None,
-            "building" : build_result["building"] if "building" in build_result else False
+            "result" : self.health_to_jenkins_status[job_status.health] if job_status.health in self.health_to_jenkins_status else None,
+            "building" : job_status.active
         }
-        if "number" in build_result:
-            jenkins_response["number"] = build_result["number"]
-        if "timestamp" in build_result and build_result["timestamp"]:
-            jenkins_response["timestamp"] = build_result["timestamp"].timestamp() * 1000
-        if "culprits" in build_result:
-            jenkins_response["culprits"] = [{"fullName" : culprit} for culprit in build_result["culprits"]]
+        if job_status.number:
+            jenkins_response["number"] = job_status.number
+        if job_status.timestamp:
+            jenkins_response["timestamp"] = job_status.timestamp.timestamp() * 1000
+        if job_status.names:
+            jenkins_response["culprits"] = [{"fullName" : name} for name in job_status.names]
         return jenkins_response
 
-    def __to_jenkins_view_result__(self, build_status):
+    def __to_jenkins_view_result__(self, jobs_status):
         jenkins_view = {
             "description": None,
             "jobs" : []
         }
-        for job in build_status:
-            jenkins_view["jobs"].append({"name" : job, "color" : self.__to_color__(build_status[job])})
+        for job in jobs_status:
+            jenkins_view["jobs"].append({"name" : job, "color" : self.__to_color__(jobs_status[job])})
         return jenkins_view
 
     def __to_color__(self, job_status):
-        if "result" in job_status and job_status["result"] in self.result_to_color:
-            color=self.result_to_color[job_status["result"]]
-            if "building" in job_status and job_status["building"]:
+        if job_status.health in self.result_to_color:
+            color=self.result_to_color[job_status.health]
+            if job_status.active:
                 color += "_anime"
             return color
         else:

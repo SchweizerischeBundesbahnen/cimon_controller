@@ -3,7 +3,7 @@ Copyright (C) Schweizerische Bundesbahnen SBB 2016, Apache Licence 2.0. Author: 
 
 Cimon implements a simple build momitor using a Raspberry Pi, a simple USB traffic light and an USB switchable socket. 
 
-The cimon controller is a set of scripts written in python. It queries jenkins (and potentially other sources) and passes the result on to output devices (currently the energenie socket and the cleware USB traffic light).
+The cimon controller is a set of scripts written in python. It queries jenkins and new relic (and potentially other sources) and passes the result on to output devices (currently the energenie socket and the cleware USB traffic light).
 
 The scripts are written in Python 3.4.
 
@@ -64,7 +64,7 @@ In order to add your own collector, you need to implement a class within your mo
             pass # close your input, will be called at the start of the cimon application or if pausing. Will be called multiple times.
 
         def collect(self):
-            return {} # query the status from server and put into a dictionary of status results. 
+            return {} # query the status from server and put into a dictionary of status results (tuple of uri and job name to JobStatus object). 
                       # This dictionary is read by the output accuring to the type of collector.
 
 ### Adding an output
