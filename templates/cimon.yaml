@@ -35,6 +35,24 @@ collector:
     # the depth parameter in the api query to jenkins when querying views (depth=x). The higher the more data is sent.
     # Default is 0, use 2 if you need timestamp and culprits from views (for instance for apiserveroutput)
     # viewDepth: 0
+    # the name to use for the collector internally. Optional, per default it is the hostname.
+    # name: <name>
+
+  # collect application status from new relic
+  - newreliccollector:
+    # the base new relic. Required.
+    url: <url-of-newrelic>
+    # the api key for new relic. Required.
+    apiKey: <newrelic-api-key>
+    # the applications to collect from newrelic by a regex for the name. Optional, default is all (.*)
+    #applicationNamePattern: <regex-for-application-names-in-newrelic>
+    # refresh the list of applications every n requests. Optional, default is 50
+    # refreshApplicationsEvery: 50
+    # Enable or turn off ssl validation. Optional, default is True (SSL validation on)
+    # verifySsl: True
+    # the name to use for the collector internally. Optional, per default it is the hostname.
+    # name: <name>
+
 # collectors - fetching the current status to display, for instance build status
 output:
   # Output to the USB Ampel. Usually no configuration required.
@@ -50,8 +68,9 @@ output:
     # flashIntervalSec: 1.5
     # output all light states every given seconds. Put 0 to enforce absolute output every time. Default is 300 seconds (5 minutes)
     # absoulteEverySec: 300
-    # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
+    # filter by job name (build) and collector to output to this device using a regex. Default is None - same as ".*" (all)
     # buildFilterPattern: ".*"
+    # collectorFilterPattern: ".*"
   # Output to the Energenie Socket (Steckdosenleiste). Usually no configuration required.
   # remove if you dont use Energenie.
 
@@ -63,8 +82,6 @@ output:
     # signalErrorThreshold: 3
     # repeat the output every n times even if it is unchanged. Default is every 15 times.
     # repeatEvery: 15
-    # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
-    # buildFilterPattern: ".*"
     # change the assignment of sockets (numbers 1 to 4) the colors red, yellow and green. Default is 1: red, 2: yellow, 3: green and 4: red.
     # Sockets can be omitted (will not be switched by this output, for instance 1: green, 2: yellow will only switch 1 and 2 but not 3 and 4)
     # colors:
@@ -72,6 +89,9 @@ output:
     #  2: yellow
     #  3: green
     #  4: red
+    # filter by job name (build) and collector to output to this device using a regex. Default is None - same as ".*" (all)
+    # buildFilterPattern: ".*"
+    # collectorFilterPattern: ".*"
 
   - implementation: apiserveroutput
     # Proxy Jenkins (and in future other services). Provide a HTTP Rest API server to the remote service (
@@ -85,6 +105,8 @@ output:
       # name: regex pattern (will be applied on the build name)
       #myview: "my\.build\.to\.display\..*"
       #myotherview: "my\.otherbuild\.to\.display\..*"
+    # filter by collector to forward to the api server using a regex. Default is None - same as ".*" (all)
+    # collectorFilterPattern: ".*"
 
   - implementation: playbulboutput
     # the device (mandatory) is the (bluetooth) mac address of your bulb
@@ -109,8 +131,9 @@ output:
     # flash code, please have a look at your playbulb manual for valid values, default is pulse with speed 04 04
     # flash: 01000404
     #
-    # filter builds to output to this device using a regex. Default is None - same as ".*", all builds are considered.
+    # filter by job name (build) and collector to output to this device using a regex. Default is None - same as ".*" (all)
     # buildFilterPattern: ".*"
+    # collectorFilterPattern: ".*"
 
 # logging configuration, will be passed on to the python loggin dictionary config 1:1.
 # will log from INFO to a file in /var/log/cimon/cimon.log and from CRITICAL to stderr

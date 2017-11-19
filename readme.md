@@ -3,7 +3,7 @@ Copyright (C) Schweizerische Bundesbahnen SBB 2016, Apache Licence 2.0. Author: 
 
 Cimon implements a simple build momitor using a Raspberry Pi, a simple USB traffic light and an USB switchable socket. 
 
-The cimon controller is a set of scripts written in python. It queries jenkins (and potentially other sources) and passes the result on to output devices (currently the energenie socket and the cleware USB traffic light).
+The cimon controller is a set of scripts written in python. It queries jenkins and new relic (and potentially other sources) and passes the result on to output devices (currently the energenie socket and the cleware USB traffic light).
 
 The scripts are written in Python 3.4.
 

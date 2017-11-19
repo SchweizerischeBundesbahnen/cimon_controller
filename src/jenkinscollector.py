@@ -15,7 +15,6 @@ from configutil import decrypt
 from cimon import JobStatus,RequestStatus,Health
 from urllib.parse import urlparse
 
-
 # Collect the build status in jenins via rest requests.
 # will request the status of the latestBuild of each job configured and each job in each view configured
 # views will be updated periodically
@@ -45,8 +44,8 @@ def create(configuration, key=None):
                             max_parallel_requests = configuration.get("maxParallelRequest", default_max_parallel_requests),
                             verify_ssl = configuration.get("verifySsl", True),
                             view_depth = configuration.get("viewDepth", default_view_depth),
-                            client_cert = configure_client_cert(configuration.get("clientCert", None), key))
-
+                            client_cert = configure_client_cert(configuration.get("clientCert", None), key),
+                            name = configuration.get('name', None))
 
 class JenkinsCollector:
     # extract result and building state from the colors in the view
@@ -58,7 +57,19 @@ class JenkinsCollector:
                                 "UNSTABLE" : Health.UNWELL,
                                 "FAILURE": Health.SICK}
 
-    def __init__(self, base_url, username = None, password = None, job_names =(), view_names = (), max_parallel_requests=default_max_parallel_requests, jwt_login_url=None, saml_login_url=None, verify_ssl=True, view_depth=default_view_depth,client_cert=None):
+    def __init__(self,
+                 base_url,
+                 username = None,
+                 password = None,
+                 job_names =(),
+                 view_names = (),
+                 max_parallel_requests=default_max_parallel_requests,
+                 jwt_login_url=None,
+                 saml_login_url=None,
+                 verify_ssl=True,
+                 view_depth=default_view_depth,
+                 client_cert=None,
+                 name=None):
         self.jenkins = JenkinsClient(http_client=create_http_client(base_url=base_url,
                                                                     username=username,
                                                                     password=password,
@@ -71,7 +82,7 @@ class JenkinsCollector:
         self.view_names = tuple(view_names)
         self.max_parallel_requests = max_parallel_requests
         self.last_results={}
-        self.collector_name = urlparse(base_url).netloc
+        self.name = name if name else urlparse(base_url).netloc
 
     def collect(self):
         method_param = [(self.collect_job, job_name) for job_name in self.job_names] + \
@@ -89,7 +100,7 @@ class JenkinsCollector:
         return builds
 
     def qualified_job_name(self, job_name):
-        return self.collector_name, job_name
+        return self.name, job_name
 
     def collect_job(self, job_name):
         job_name, req_status, jenkins_build = self.__latest_build__(job_name)
@@ -115,7 +126,7 @@ class JenkinsCollector:
 
     def __convert_build__(self, job_name, jenkins_build_result):
         status = JobStatus(
-            result=self.__convert_store_fill_job_result__(job_name, jenkins_build_result["result"]),
+            health=self.__convert_store_fill_job_result__(job_name, jenkins_build_result["result"]),
             active=jenkins_build_result["building"],
             timestamp=datetime.fromtimestamp(jenkins_build_result["timestamp"]/1000.0),
             number=jenkins_build_result["number"],
@@ -164,10 +175,10 @@ class JenkinsCollector:
                     status = JobStatus(request_status=RequestStatus.NOT_FOUND)
                 elif color_status_building[0] in self.colors_to_result:
                     status = JobStatus(
-                        result = self.colors_to_result[color_status_building[0]],
+                        health= self.colors_to_result[color_status_building[0]],
                         active = len(color_status_building) > 1 and color_status_building[1] == "anime")
                 else:
-                     status = JobStatus(result=Health.OTHER)
+                     status = JobStatus(health=Health.OTHER)
             if status and "builds" in job: # requires depth 2
                 latest_build = self.__latest_build_in_view__(job)
                 if "number" in latest_build:

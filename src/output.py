@@ -37,10 +37,10 @@ def has_request_status(status, req_status):
             return True
     return False
 
-def has_result(status, result):
+def has_health(status, health):
     for name in status:        
         if status[name].request_status == RequestStatus.OK and \
-           status[name].result == result:
+           status[name].health == health:
             return True
     return False
 
@@ -52,6 +52,7 @@ def is_building(status):
     return False
 
 class NameFilter():
+
     def __init__(self, job_name_pattern=None, collector_pattern=None):
         self.job_name_pattern = re.compile(job_name_pattern) if job_name_pattern else None
         self.collector_pattern = re.compile(collector_pattern) if collector_pattern else None
@@ -72,7 +73,7 @@ class AbstractBuildOutput():
     """ Output for builds with error handling. Derived methods have to implement signal and on_status and set the last_signal after signaling non-error state """
     def __init__(self, signal_error_threshold=default_signal_error_threshold, build_filter_pattern=None, collector_filter_pattern=None):
         self.signal_error_threshold=signal_error_threshold
-        self.build_filter = NameFilter(build_filter_pattern)
+        self.build_filter = NameFilter(collector_pattern=collector_filter_pattern,job_name_pattern=build_filter_pattern)
         self.error_count=0
         self.last_status=None
 
@@ -101,19 +102,19 @@ class AbstractBuildOutput():
     def on_status(self, status):
         building = is_building((status))
         # if there is at least one build failed, signal red
-        if has_result(status, Health.SICK):
+        if has_health(status, Health.SICK):
             self.__signal_health_and_store__(Health.SICK, building)
             # if there is at least one build unstable in undefied state or not found, signal yellow
-        elif has_result(status, Health.UNWELL):
+        elif has_health(status, Health.UNWELL):
             self.__signal_health_and_store__(Health.UNWELL, building)
         # if at least one in undefied state or not found, signal yellow
-        elif has_result(status, Health.OTHER):
+        elif has_health(status, Health.OTHER):
             self.__signal_health_and_store__(Health.OTHER, building)
         # elseif at least one build has success, all is OK, signal green
         # this include request_status == "ok" and result == "successs"
         # as well as   request_status == "not_found"
         # but only if at least one build had request_status == "ok" and result == "success"
-        elif has_result(status, Health.HEALTHY):
+        elif has_health(status, Health.HEALTHY):
             self.__signal_health_and_store__(Health.HEALTHY, building)
         # if all builds are request_status MOT_FOUND or result EMPTY, signal nothing
         elif self.last_status:

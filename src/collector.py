@@ -14,7 +14,7 @@ from configutil import decrypt
 
 logger = logging.getLogger(__name__)
 
-def create_http_client(base_url, username = None, password = None, jwt_login_url= None, saml_login_url=None, verify_ssl=True, client_cert=None):
+def create_http_client(base_url, username = None, password = None, jwt_login_url= None, saml_login_url=None, fixed_headers=None, verify_ssl=True, client_cert=None):
     ssl_config = SslConfig(verify_ssl, client_cert)
     if jwt_login_url:
         return HttpClient(base_url=base_url,
@@ -27,6 +27,10 @@ def create_http_client(base_url, username = None, password = None, jwt_login_url
     elif username:
         return HttpClient(base_url=base_url,
                           authentication_handler=BasicAuthenticationHandler(username=username, password=password),
+                          ssl_config=ssl_config)
+    elif fixed_headers:
+        return HttpClient(base_url=base_url,
+                          authentication_handler=FixedHeaderAuthenticationHandler(headers=fixed_headers),
                           ssl_config=ssl_config)
     else:
         return HttpClient(base_url=base_url, ssl_config=ssl_config)
@@ -153,6 +157,18 @@ class SamlAuthenticationHandler(TokenBasedAuthenticationHandler):
         super().__init__(username=username, password=password, login_url=saml_login_url,  ssl_config=ssl_config)
         self.request_header_name="Cookie"
         self.response_header_name="Set-Cookie"
+
+class FixedHeaderAuthenticationHandler:
+    def __init__(self, headers):
+       self.headers = headers
+    """ Authenticate by using a fixed header like an api key"""
+
+    def request_headers(self):
+        return self.headers
+
+    def handle_forbidden(self, request_headers, status_code):
+        return False # no action possible
+
 
 class HttpClient:
     """ A HttpClient able to do authentication via

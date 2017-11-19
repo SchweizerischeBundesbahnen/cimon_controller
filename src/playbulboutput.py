@@ -30,7 +30,8 @@ def create(configuration, aesKey=None):
                               red_color=configuration.get("redColor", default_red_color),
                               green_color=configuration.get("greenColor", default_green_color),
                               yellow_color=configuration.get("yellowColor", default_yellow_color),
-                              build_filter_pattern=configuration.get("buildFilterPattern", None))
+                              build_filter_pattern=configuration.get("buildFilterPattern", None),
+                              collector_filter_pattern=configuration.get("collectorFilterPattern", None))
 
 
 class PlaybulbBuildAmpel(AbstractBuildAmpel):
@@ -43,9 +44,12 @@ class PlaybulbBuildAmpel(AbstractBuildAmpel):
                  red_color=default_red_color,
                  green_color=default_green_color,
                  yellow_color=default_yellow_color,
-                 build_filter_pattern=None):
+                 build_filter_pattern=None,
+                 collector_filter_pattern=None):
 
-        super().__init__(signal_error_threshold, build_filter_pattern)
+        super().__init__(signal_error_threshold=signal_error_threshold,
+                         build_filter_pattern=build_filter_pattern,
+                         collector_filter_pattern=collector_filter_pattern)
         self.playbulb = PlaybulbAmpel(device, color_reg, flash_reg, flash, red_color, green_color, yellow_color)
 
     def signal(self, red, yellow, green, flash=False):

@@ -29,7 +29,7 @@ def create(configuration, key=None):
         raise ValueError("There is allready one API server configured, only one is allwowed")
     host = configuration.get("host", default_host)
     port = configuration.get("port", default_port)
-    collector_filter = NameFilter(configuration["collectorPattern"]) if "collectorPattern" in configuration else NameFilter()
+    collector_filter = NameFilter(configuration["collectorFilterPattern"]) if "collectorFilterPattern" in configuration else NameFilter()
     views_from_config = configuration.get("views", {}) # view: pattern
     for view_name, pattern in views_from_config.items():
         views[view_name] =  re.compile(pattern if pattern else r'.*')
@@ -99,7 +99,7 @@ class ApiServer():
                        Health.UNWELL : "yellow",
                        Health.HEALTHY      : "blue"}
 
-    result_to_jenkins_status = {Health.SICK  : "FAILURE",
+    health_to_jenkins_status = {Health.SICK  : "FAILURE",
                                 Health.UNWELL : "UNSTABLE",
                                 Health.HEALTHY      : "SUCCESS"}
 
@@ -141,7 +141,7 @@ class ApiServer():
 
     def __to_jenkins_job_result__(self, job_status):
         jenkins_response = {
-            "result" : self.result_to_jenkins_status[job_status.result] if job_status.result in self.result_to_jenkins_status else None,
+            "result" : self.health_to_jenkins_status[job_status.health] if job_status.health in self.health_to_jenkins_status else None,
             "building" : job_status.active
         }
         if job_status.number:
@@ -162,8 +162,8 @@ class ApiServer():
         return jenkins_view
 
     def __to_color__(self, job_status):
-        if job_status.result in self.result_to_color:
-            color=self.result_to_color[job_status.result]
+        if job_status.health in self.result_to_color:
+            color=self.result_to_color[job_status.health]
             if job_status.active:
                 color += "_anime"
             return color

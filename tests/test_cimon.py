@@ -259,7 +259,7 @@ class CimonOperatingDaysHoursTest(TestCase):
 class CimonConfigurationTests(TestCase):
 
     def test_configure_file(self):
-        c = cimon.configure_from_yaml_file("%s/testdata/cimon.yaml" % os.path.dirname(__file__))
+        c = cimon.configure_from_yaml_file("%s/testdata/cimon_rotating.yaml" % os.path.dirname(__file__))
         self.assertEqual(len(c.collectors), 1)
         self.assertEqual(len(c.outputs), 1)
         self.assertEqual(c.polling_interval_sec, 10)

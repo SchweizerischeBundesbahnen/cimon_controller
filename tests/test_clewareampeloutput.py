@@ -94,14 +94,14 @@ class TestClewarecontrolClewareAmpel(TestCase):
         sleep(0.42) # allow for 1 flashes (on-off)
         self.ampel.display(green=True, flash=False)
         # last display is not shown because it is the same value
-        self.assertEqual(self.ampel.__call_clewarecontrol__.call_count, 4)
+        self.assertIn(self.ampel.__call_clewarecontrol__.call_count, [3,4])
 
     def test_output_called_display_green_ten_times(self):
         self.ampel = self.create_cleware_ampel(absoulte_every_sec=1)
         for i in range(0,2):
             self.ampel.display(green=True)
             sleep(1)
-        self.assertEqual(2, self.ampel.__call_clewarecontrol__.call_count)
+        self.assertIn(self.ampel.__call_clewarecontrol__.call_count, [1,2])
 
     def test_output_called_display_green_twice_absolute_every(self):
         self.ampel = self.create_cleware_ampel(absoulte_every_sec=0)

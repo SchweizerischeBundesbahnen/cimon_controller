@@ -61,19 +61,19 @@ class Health(Enum):
 class JobStatus():
     def __init__(self,
                  request_status=RequestStatus.OK,
-                 result=Health.OTHER,
+                 health=Health.OTHER,
                  active=False,
                  timestamp=None,
                  number=None,
                  names=None):
         self.request_status = request_status
-        self.result = result
+        self.health = health
         self.active = active
         self.timestamp = timestamp
         self.number=number
         self.names=names
 
-    def __str__(self):
+    def __repr__(self):
         return str(self.__dict__)
 
 class Cimon():

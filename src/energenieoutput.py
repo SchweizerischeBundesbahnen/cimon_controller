@@ -28,14 +28,21 @@ def create(configuration, aesKey=None):
                                signal_error_threshold=configuration.get("signalErrorThreshold", default_signal_error_threshold),
                                repeat_every=configuration.get("repeatEvery", default_repeat_every),
                                build_filter_pattern=configuration.get("buildFilterPattern", None),
+                               collector_filter_pattern=configuration.get("collectorFilterPattern", None),
                                colors=configuration.get("colors", default_colors))
 
 
 class EnergenieBuildAmpel(AbstractBuildAmpel):
     """ control energenie according to build status """
 
-    def __init__(self, device_nr=None, signal_error_threshold=default_signal_error_threshold, repeat_every=default_repeat_every, build_filter_pattern=None, colors=default_colors):
-        super(EnergenieBuildAmpel, self).__init__(signal_error_threshold=signal_error_threshold, build_filter_pattern=build_filter_pattern)
+    def __init__(self,
+                 device_nr=None,
+                 signal_error_threshold=default_signal_error_threshold,
+                 repeat_every=default_repeat_every,
+                 build_filter_pattern=None,
+                 collector_filter_pattern=None,
+                 colors=default_colors):
+        super(EnergenieBuildAmpel, self).__init__(signal_error_threshold=signal_error_threshold, build_filter_pattern=build_filter_pattern, collector_filter_pattern=collector_filter_pattern)
         self.energenie = Energenie(device_nr=device_nr, repeat_every=repeat_every)
         self.colors=colors
 

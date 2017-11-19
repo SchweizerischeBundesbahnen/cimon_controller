@@ -8,14 +8,14 @@ from cimon import JobStatus,RequestStatus, Health
 logger = logging.getLogger(__name__)
 
 default_status = (
-    JobStatus(request_status=RequestStatus.OK, result=Health.SICK, active=False),
-    JobStatus(request_status=RequestStatus.OK, result=Health.SICK, active=True),
-    JobStatus(request_status=RequestStatus.OK, result=Health.UNWELL, active=False),
-    JobStatus(request_status=RequestStatus.OK, result=Health.UNWELL, active=True),
-    JobStatus(request_status=RequestStatus.OK, result=Health.HEALTHY, active=False),
-    JobStatus(request_status=RequestStatus.OK, result=Health.HEALTHY, active=True),
-    JobStatus(request_status=RequestStatus.OK, result=Health.OTHER, active=False),
-    JobStatus(request_status=RequestStatus.OK, result=Health.OTHER, active=True),
+    JobStatus(request_status=RequestStatus.OK, health=Health.SICK, active=False),
+    JobStatus(request_status=RequestStatus.OK, health=Health.SICK, active=True),
+    JobStatus(request_status=RequestStatus.OK, health=Health.UNWELL, active=False),
+    JobStatus(request_status=RequestStatus.OK, health=Health.UNWELL, active=True),
+    JobStatus(request_status=RequestStatus.OK, health=Health.HEALTHY, active=False),
+    JobStatus(request_status=RequestStatus.OK, health=Health.HEALTHY, active=True),
+    JobStatus(request_status=RequestStatus.OK, health=Health.OTHER, active=False),
+    JobStatus(request_status=RequestStatus.OK, health=Health.OTHER, active=True),
     JobStatus(request_status=RequestStatus.ERROR),  # igonred (if show_error_threshold is 3)
     JobStatus(request_status=RequestStatus.ERROR),  # igonred (if show_error_threshold is 3)
     JobStatus(request_status=RequestStatus.ERROR),  # igonred (if show_error_threshold is 3)
