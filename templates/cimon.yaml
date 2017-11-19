@@ -39,7 +39,7 @@ collector:
     # name: <name>
 
   # collect application status from new relic
-  - newreliccollector:
+  - implementation: newreliccollector
     # the base new relic. Required.
     url: <url-of-newrelic>
     # the api key for new relic. Required.
