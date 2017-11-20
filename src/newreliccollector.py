@@ -95,13 +95,16 @@ class NewRelicCollector:
 class NewRelicClient():
     def __init__(self, http_client, application_name_pattern, refresh_applications_every):
         self.http_client = http_client
-        self.application_name_pattern = re.compile(application_name_pattern)
+        if not application_name_pattern or application_name_pattern == r'.*':
+            self.application_name_pattern=None
+        else:
+            self.application_name_pattern = re.compile(application_name_pattern)
         self.refresh_applications_every = refresh_applications_every
         self.request_count=refresh_applications_every
         self.application_ids={}
 
     def applications_health(self):
-        if(self.request_count >= (self.refresh_applications_every)):
+        if self.application_name_pattern and self.request_count >= (self.refresh_applications_every):
             self.application_ids = self.__load_application_ids__()
             self.request_count=0
         result = self.__load_application_health_state__()
@@ -116,7 +119,7 @@ class NewRelicClient():
         return json.loads(self.http_client.open_and_read("/v2/applications.json"))
 
     def __load_application_health_state__(self):
-        result = self.__load_applications_by_id__()
+        result = self.__load_applications_by_id__() if self.application_name_pattern else self.__load_all_applications__()
         return {application['name']:application['health_status'] for application in result['applications']}
 
     def __load_applications_by_id__(self):
