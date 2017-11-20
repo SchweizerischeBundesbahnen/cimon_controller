@@ -89,8 +89,8 @@ class JenkinsCollector:
                        [(self.collect_view, view_name) for view_name in self.view_names]
 
         with futures.ThreadPoolExecutor(max_workers=self.max_parallel_requests) as executor:
-            future_requests = ({executor.submit(method, param):
-                                    (method, param) for method, param in method_param})
+            future_requests = {executor.submit(method, param):
+                                    (method, param) for method, param in method_param}
 
         builds = {}
         for future_request in futures.as_completed(future_requests):
