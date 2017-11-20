@@ -56,10 +56,14 @@ class NewRelicCollector:
                  refresh_applications_every=default_update_applications_every,
                  name=None,
                  verify_ssl=True):
-        self.new_relic_client = NewRelicClient(
-            http_client=create_http_client(base_url=base_url,fixed_headers={'X-Api-Key':api_key},verify_ssl=verify_ssl),
-            application_name_pattern=application_name_pattern,
-            refresh_applications_every=refresh_applications_every)
+        http_client=create_http_client(base_url=base_url,fixed_headers={'X-Api-Key':api_key},verify_ssl=verify_ssl)
+        if application_name_pattern and application_name_pattern != r'.*':
+            self.new_relic_client = ApplicationNameFilterNewRelicClient(
+                http_client=http_client,
+                application_name_pattern=application_name_pattern,
+                refresh_applications_every=refresh_applications_every)
+        else:
+            self.new_relic_client= BaseNewRelicClient(http_client=http_client)
         self.name = name if name else urlparse(base_url).netloc
 
     def collect(self):
@@ -92,35 +96,38 @@ class NewRelicCollector:
             return Health.OTHER
         return self.health_status_to_cimon_health[app_health]
 
-class NewRelicClient():
-    def __init__(self, http_client, application_name_pattern, refresh_applications_every):
+class BaseNewRelicClient():
+    def __init__(self, http_client):
         self.http_client = http_client
-        if not application_name_pattern or application_name_pattern == r'.*':
-            self.application_name_pattern=None
-        else:
-            self.application_name_pattern = re.compile(application_name_pattern)
+
+    def applications_health(self):
+        return self.__extract_health_status__(self.__load_all_applications__())
+
+    def __load_all_applications__(self):
+        return json.loads(self.http_client.open_and_read("/v2/applications.json"))
+
+    def __extract_health_status__(self, result):
+        return {application['name']:application['health_status'] for application in result['applications']}
+
+class ApplicationNameFilterNewRelicClient(BaseNewRelicClient):
+    def __init__(self, http_client, application_name_pattern, refresh_applications_every):
+        super().__init__(http_client=http_client)
+        self.application_name_pattern = re.compile(application_name_pattern)
         self.refresh_applications_every = refresh_applications_every
         self.request_count=refresh_applications_every
         self.application_ids={}
 
     def applications_health(self):
-        if self.application_name_pattern and self.request_count >= (self.refresh_applications_every):
+        if self.request_count >= (self.refresh_applications_every):
             self.application_ids = self.__load_application_ids__()
             self.request_count=0
-        result = self.__load_application_health_state__()
+        result = self.__extract_health_status__(self.__load_applications_by_id__())
         self.request_count+=1
         return result
 
     def __load_application_ids__(self):
         result=self.__load_all_applications__()
         return [str(application['id']) for application in result['applications'] if self.application_name_pattern.match(application['name'])]
-
-    def __load_all_applications__(self):
-        return json.loads(self.http_client.open_and_read("/v2/applications.json"))
-
-    def __load_application_health_state__(self):
-        result = self.__load_applications_by_id__() if self.application_name_pattern else self.__load_all_applications__()
-        return {application['name']:application['health_status'] for application in result['applications']}
 
     def __load_applications_by_id__(self):
         return json.loads(self.http_client.open_and_read("/v2/applications.json?filter[ids]=%s" % ','.join(self.application_ids)))
