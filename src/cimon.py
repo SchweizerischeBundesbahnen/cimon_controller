@@ -15,6 +15,7 @@ from datetime import datetime, timedelta, time
 from argparse import ArgumentParser
 from copy import deepcopy
 from enum import Enum
+from concurrent import futures
 
 # The Masterboxcontrolprogram of the ci monitor scripts.
 #
@@ -83,13 +84,15 @@ class Cimon():
                  collectors=tuple(),
                  outputs=tuple(),
                  operating_hours=tuple(range(0,24)),
-                 operating_days=tuple(range(0,7))):
+                 operating_days=tuple(range(0,7)),
+                 max_threads=7):
         self.rescheduler = None
         self.polling_interval_sec=int(polling_interval_sec)
         self.collectors=collectors
         self.outputs=outputs
         self.operating_hours=sorted(operating_hours)
         self.operating_days=sorted(operating_days)
+        self.max_threads=max_threads
 
     def close(self):
         for target in self.outputs + self.collectors:
@@ -129,14 +132,24 @@ class Cimon():
     def collect_and_output(self):
         logger.debug("Running collection")
         # first collect the current status
-        status = {}
-        for collector in self.collectors:
-            status.update(collector.collect())
+        status = self.__collect_async__()
         logger.debug("Collected status: %s", status)
         # then display the current status
-        for output in self.outputs:
-            output.on_update(deepcopy(status))
+        self.__output_async__(status)
         logger.info("Collected status and updated outputs")
+
+    def __collect_async__(self):
+        with futures.ThreadPoolExecutor(max_workers=self.max_threads) as executor:
+            futures_on_status = [executor.submit(collector.collect) for collector in self.collectors]
+        status = {}
+        for future_status in futures.as_completed(futures_on_status):
+            status.update(future_status.result())
+        return status
+
+    def __output_async__(self, status):
+        with futures.ThreadPoolExecutor(max_workers=self.max_threads) as executor:
+            futures_output = [executor.submit(output.on_update, deepcopy(status)) for output in self.outputs]
+        futures.wait(futures_output)
 
     def sec_to_next_operating(self, now):
         next_operating_hour = self.__find_same_or_next_day_or_hour__(self.operating_hours, now.hour)
@@ -191,12 +204,14 @@ def configure_from_dict(configuration, key):
         __check_all_implement_method__(outputs, "on_update")
         operating_hours = __parse_hours_or_days__(configuration.get("operatingHours", "*"), "0-23")
         operating_days = __parse_hours_or_days__(configuration.get("operatingDays", "*"), "0-6")
+        max_threads=configuration.get("maxThreads",7)
         logger.info("Read configuration: %s", configuration)
         return Cimon(polling_interval_sec = polling_interval_sec,
                      collectors = collectors,
                      outputs=outputs,
                      operating_hours=operating_hours,
-                     operating_days=operating_days)
+                     operating_days=operating_days,
+                     max_threads=max_threads)
     except Exception:
         logger.exception("Configuration failed, invalid configuration: %s", configuration)
         raise

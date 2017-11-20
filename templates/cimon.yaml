@@ -42,8 +42,10 @@ collector:
   - implementation: newreliccollector
     # the base new relic. Required.
     url: https://api.newrelic.com
-    # the api key for new relic. Required.
+    # the api key for new relic in plaintext. This or apiKeyEncrypted is required. Use apiKeyEncyrpted.
     apiKey: <newrelic-api-key>
+     # the api key for new relic encrypted with the cimon password. This or apiKey is required
+    apiKeyEncyrpted: <newrelic-api-key-encyrpted>
     # the applications to collect from newrelic by a regex for the name. Optional, default is all (.*)
     # applicationNamePattern: <regex-for-application-names-in-newrelic>
     # refresh the list of applications every n requests. Optional, default is 50

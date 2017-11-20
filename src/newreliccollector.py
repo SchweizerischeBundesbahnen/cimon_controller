@@ -33,12 +33,11 @@ logger = logging.getLogger(__name__)
 
 def create(configuration, key=None):
     return NewRelicCollector(base_url = configuration["url"],
-                             api_key = configuration["apiKey"],
+                             api_key = configuration.get("apiKey", None) or decrypt(configuration.get("apiKeyEncyrpted", None), key),
                              application_name_pattern= configuration.get("applicationNamePattern", r'.*'),
                              refresh_applications_every=configuration.get("refreshApplicationsEvery",default_update_applications_every), # times
                              name = configuration.get("name", None),
                              verify_ssl=configuration.get("verifySsl", True))
-
 
 class NewRelicCollector:
 
