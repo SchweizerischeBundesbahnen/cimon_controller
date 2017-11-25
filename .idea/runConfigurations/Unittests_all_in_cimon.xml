@@ -3,13 +3,14 @@
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="PARENT_ENVS" value="true" />
     <envs />
-    <option name="SDK_HOME" value="C:\tools\Python34\python.exe" />
+    <option name="SDK_HOME" value="C:\Python34\python.exe" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/tests" />
-    <option name="IS_MODULE_SDK" value="false" />
+    <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
-    <module name="cimon_config_sbb" />
+    <module name="cimon_controller" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" enabled="false" sample_coverage="true" runner="coverage.py" />
+    <option name="_new_pattern" value="&quot;&quot;" />
     <option name="_new_additionalArguments" value="&quot;&quot;" />
     <option name="_new_target" value="&quot;.&quot;" />
     <option name="_new_targetType" value="&quot;PATH&quot;" />

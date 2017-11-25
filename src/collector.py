@@ -3,6 +3,7 @@
 __author__ = 'florianseidl'
 
 from base64 import b64encode
+from urllib import request
 from urllib.request import urlopen, HTTPError, URLError, ContentTooShortError, Request
 from time import sleep
 from threading import Condition
@@ -44,6 +45,7 @@ def configure_client_cert(config, key=None):
         return None
     return ClientCert(config['certfile'],config['keyfile'], decrypt(config.get('passwordEncrypted', None), key))
 
+# encrypt the certificate key using: openssl rsa -aes256 -in client.key -passout pass:<insert password here> -out client_enc.key
 class ClientCert:
     def __init__(self, certfile, keyfile, password):
         if not path.isfile(certfile):
@@ -60,17 +62,20 @@ class ClientCert:
 
 class SslConfig:
     def __init__(self, verify_ssl=True, client_cert=None):
-        self.ctx = ssl.create_default_context()
+        ctx = ssl.create_default_context()
         if not verify_ssl:
             # verification activated, default will be fine
-            self.__disable_ssl_verification__(self.ctx)
+            self.__disable_ssl_verification__(ctx)
         if client_cert:
-            client_cert.add_to(self.ctx)
+            client_cert.add_to(ctx)
+        if sys.version_info < (3,4,3):
+            logger.warning("Python version 3.4.3, using alternative global config")
+            request.install_opener(request.build_opener(request.HTTPSHandler(context=ctx, check_hostname=verify_ssl)))
+            self.ctx = None
+        else:
+            self.ctx = ctx
 
     def __disable_ssl_verification__(self, ctx):
-        if sys.version_info < (3,4,3):
-            logger.warning("Disabling verify ssl is not supported in python version below 3.4.3. Ignoring configuration, ssl verfication is enabled")
-            return
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
         logger.info("SSL validation disabled")
@@ -225,6 +230,8 @@ class HttpClient:
             return self.base_url
 
     def __open__(self, request):
+        if not self.ssl_config.ctx:
+            return urlopen(request)
         return urlopen(request, context=self.ssl_config.ctx)
 
     def __try__log_contents__(self, e):

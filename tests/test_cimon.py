@@ -21,27 +21,27 @@ class CimonTest(TestCase):
         self.__do_run__(1, mock={})
 
     def test_run_1_collector_1_output_1_status(self):
-        self.__do_run__(1, mock={"a" : { "b" : "c", "e": "f"}})
+        self.__do_run__(1, mock={ "b" : JobStatus(), "e": JobStatus()})
 
     def test_run_1_collector_1_output_3_status(self):
-        self.__do_run__(1, mock={"a" : { "b" : "c", "e": "f"},
-                                 "x" : { "y" : "z"},
-                                 "g" : { "e" : "f"}})
+        self.__do_run__(1, mock={ "b" : JobStatus(), "e": JobStatus(),
+                                  "y" : JobStatus(),
+                                  "e" : JobStatus()})
 
     def test_run_1_collector_3_output_1_status(self):
-        self.__do_run__(3, mock={"a" : { "b" : "c", "e": "f"}})
+        self.__do_run__(3, mock={ "b" : JobStatus(), "e": JobStatus()})
 
     def test_run_3_collector_1_output_1_status(self):
-        self.__do_run__(1, mock={"a" : { "b" : "c", "e": "f"}},
-                        other_mock={"bla" : {"x": 42 }},
-                        another_mock={"nice" : None })
+        self.__do_run__(1, mock={"a" : JobStatus(), "e": JobStatus()},
+                        other_mock={"bla" : JobStatus()},
+                        another_mock={"nice" : JobStatus() })
 
     def test_run_2_collector_same_type_1_output_1_status(self):
-        c = Cimon(collectors = tuple((self.__mock_collector__("mock", {("mock","a") : { "b" : "c", "e": "f"}}),
-                                      self.__mock_collector__("mock", {("mock","x") : { "y" : "z"}}))),
+        c = Cimon(collectors = ( self.__mock_collector__("mock",{("mock","a") : JobStatus(), ("mock","e") : JobStatus()}),
+                                 self.__mock_collector__("mock",{("mock","x") : JobStatus()})),
                   outputs = tuple((self.__mock_output__(),)))
         c.run()
-        c.outputs[0].on_update.assert_called_once_with({("mock","a") : { "b" : "c", "e": "f"}, ("mock","x") : { "y" : "z"}})
+        c.outputs[0].on_update.assert_called_once_with({("mock","a") :JobStatus(), ("mock","e"): JobStatus(), ("mock","x") : JobStatus()})
 
     def test_run_1_collector_1_output_status_none(self):
         self.__do_run__(1, mock={})
@@ -50,7 +50,7 @@ class CimonTest(TestCase):
         self.__do_run__(1)
 
     def test_run_1_collector_0_output(self):
-        self.__do_run__(1, mock={"a" : { "b" : "c", "e": "f"}})
+        self.__do_run__(1, mock={"b" : JobStatus(), "e": JobStatus()})
 
     def test_stop_calls_close(self):
         c = Cimon(outputs = (self.__mock_output__(close_method=True), self.__mock_output__(), self.__mock_output__(close_method=True)))
@@ -65,11 +65,11 @@ class CimonTest(TestCase):
         c = Cimon(collectors = tuple(self.__mock_collector__(name, self.__qualify_status__(name, status)) for name, status in collector_status.items()),
                   outputs = tuple(self.__mock_output__() for x in range(nr_outputs)))
         c.run()
-        status = {}
+        expected_status = {}
         for col in collector_status:
-            status.update(self.__qualify_status__(col, collector_status[col]))
+            expected_status.update(self.__qualify_status__(col, collector_status[col]))
         for output in c.outputs:
-            output.on_update.assert_called_once_with(status)
+            output.on_update.assert_called_once_with(expected_status)
 
     def __qualify_status__(self, col, unqualified_status):
         return {(col,k):v for k,v in unqualified_status.items()}

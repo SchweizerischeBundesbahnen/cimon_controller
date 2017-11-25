@@ -17,16 +17,8 @@ import re
 # Collect the status from new relic.
 # will collect the status of the monitoring
 #
-# is collector type "monitoring" (only one collector of each type is allowed)
+# requires a preferably encrypted API key for new relic.
 #
-# returns a dict per application (name in new relic) and containing another dict of the actual buid_status
-# the "request_status" allways has to be checked first, only if it is "ok" the further values are contained
-# { <job_name_as_string> : {
-#       "request_status" : "ok" | "error" ,
-#       "result" : "success" | "unstable" | "failure" | "other", # only if status["request_status"] == "ok"
-#       "number" : <build_number_within_job_as_integer>, # only if status["request_status"] == "ok"
-#       "timestamp" :
-# }
 default_update_applications_every = 50
 
 logger = logging.getLogger(__name__)
@@ -35,7 +27,7 @@ def create(configuration, key=None):
     return NewRelicCollector(base_url = configuration["url"],
                              api_key = configuration.get("apiKey", None) or decrypt(configuration.get("apiKeyEncyrpted", None), key),
                              application_name_pattern= configuration.get("applicationNamePattern", r'.*'),
-                             refresh_applications_every=configuration.get("refreshApplicationsEvery",default_update_applications_every), # times
+                             refresh_applications_every=configuration.get("refreshApplicationsEvery", default_update_applications_every), # times
                              name = configuration.get("name", None),
                              verify_ssl=configuration.get("verifySsl", True))
 
