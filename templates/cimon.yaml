@@ -25,7 +25,7 @@ collector:
     #samlLoginUrl: <mysamlloginurl>
     #jwtLoginUrl: <myjwtloginurl>
     # Validate HTTPS certificates - True per default (False only works with python >= 3.4.3)
-    # validateCertificates: True
+    # verifySsl: True
     # a list of jobs [job_a,job_b]. For multiple jobs better use a view.
     #jobs: []
     # a list of views [view_a,view_b]. Ideally you have exactly one view here.

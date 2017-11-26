@@ -95,7 +95,6 @@ class JenkinsCollector:
         builds = {}
         for future_request in futures.as_completed(future_requests):
             builds.update(future_request.result())
-
         logger.debug("Build status collected: %s", builds)
         return builds
 
@@ -167,7 +166,7 @@ class JenkinsCollector:
     def __extract_job__status__(self, view):
         builds = {}
         for job in view["jobs"]:
-            jobname = job["name"]
+            jobname = self.qualified_job_name(job["name"])
             status = None
             if "color" in job:
                 color_status_building = job["color"].split("_") if job["color"] else (None,)

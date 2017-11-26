@@ -74,6 +74,9 @@ class JobStatus():
         self.number=number
         self.names=names
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
     def __repr__(self):
         return str(self.__dict__)
 
@@ -144,6 +147,8 @@ class Cimon():
         status = {}
         for future_status in futures.as_completed(futures_on_status):
             status.update(future_status.result())
+        # make sure all collectors did deliver a status in the correct format
+        self.__verify_status_fornat__(status)
         return status
 
     def __output_async__(self, status):
@@ -173,6 +178,13 @@ class Cimon():
                 return day_or_hour
         # may roll over - now use the first day/hour in the list
         return operating_days_or_hours[0] if operating_days_or_hours else current_day_or_hour
+
+    def __verify_status_fornat__(self, status):
+        for key in status:
+            if not isinstance(key, tuple) or len(key) != 2 or not isinstance(key[0], str) or not isinstance(key[1], str):
+                raise ValueError('At least one key (%s) in status is not a tuple of 2 strings, complete status: %s ' % (key, str(status)))
+            if type(status[key]).__name__ != JobStatus.__name__: # can not use isinstance because of packages
+                raise ValueError('At least one value (type=%s, %s) in status is not of type JobStatus, complete status: %s' % (type(status[key]), str(status[key]), str(status)))
 
 def read_yaml_file(file):
     # read the yaml config file
@@ -204,7 +216,7 @@ def configure_from_dict(configuration, key):
         __check_all_implement_method__(outputs, "on_update")
         operating_hours = __parse_hours_or_days__(configuration.get("operatingHours", "*"), "0-23")
         operating_days = __parse_hours_or_days__(configuration.get("operatingDays", "*"), "0-6")
-        max_threads=configuration.get("maxThreads",7)
+        max_threads=configuration.get("maxThreads", 7)
         logger.info("Read configuration: %s", configuration)
         return Cimon(polling_interval_sec = polling_interval_sec,
                      collectors = collectors,
@@ -288,8 +300,8 @@ if  __name__ =='__main__':
     parser.add_argument("--validate", action="store_true", help="Just validate the config file, do not run cimoon")
     args = parser.parse_args()
     # read yaml config file (mandatory)
-    configfilepath = args.config or find_config_file_path("cimon.yaml")
-    keypath = args.key or find_config_file_path("key.bin", True)
+    configfilepath = find_config_file_path(args.config or "cimon.yaml")
+    keypath = find_config_file_path(args.key or "key.bin", True)
     if args.validate:
         __validate_config__(configfilepath, keypath)
         sys.exit(0) # just validate the config, do not start. If an exception was raised it will exit with 1

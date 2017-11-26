@@ -8,7 +8,6 @@ from types import SimpleNamespace
 from concurrent import futures
 
 
-
 class TestHttpClient(TestCase):
     json_str = '{ "foo": "bar" }'
 

@@ -12,10 +12,14 @@ from argparse import ArgumentParser
 
 def find_config_file_path(filename, optional=False):
     """search cimon.yaml in home dir cimon directory"""
-    filewithpath = "%s/cimon/%s" % (os.path.expanduser("~"), filename)
-    if os.path.isfile(filewithpath):
-        return filewithpath
-    elif not optional:
+    if os.path.isfile(filename):
+        return filename
+    home = os.path.expanduser("~")
+    for dir in (os.path.join(home, "cimon"), home, os.getcwd()):
+        file = os.path.join(dir, filename)
+        if os.path.isfile(file):
+            return file
+    if not optional:
         raise Exception("No file %s found user home, current or application directory" % filename)
 
 def decrypt(encrypted, key):

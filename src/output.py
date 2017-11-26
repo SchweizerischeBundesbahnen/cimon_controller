@@ -58,11 +58,14 @@ class NameFilter():
         self.collector_pattern = re.compile(collector_pattern) if collector_pattern else None
 
     def filter_status(self, status):
+        logger.debug("unfiltered status: %s" % status)
         filtered = status
         if self.collector_pattern:
            filtered = self.filter_by_pattern(filtered, self.collector_pattern, 0)
+           logger.debug("filtered by collector pattern %s: %s" % (self.collector_pattern, filtered))
         if self.job_name_pattern:
             filtered = self.filter_by_pattern(filtered, self.job_name_pattern, 1)
+            logger.debug("filtered by collector pattern and job name pattern %s: %s" % (self.job_name_pattern, filtered))
         return filtered
 
     def filter_by_pattern(self, status, pattern, index):

@@ -1,13 +1,9 @@
 __author__ = 'florianseidl'
 
-__author__ = 'florianseidl'
-
 import env
 from configutil import *
 from unittest import TestCase
-from unittest.mock import MagicMock, Mock, patch
-from types import SimpleNamespace
-from datetime import datetime
+from unittest.mock import Mock, patch
 import os
 
 @patch("os.path.expanduser", Mock(spec=(""), return_value="home"))

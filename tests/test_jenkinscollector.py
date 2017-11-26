@@ -1,5 +1,6 @@
 __author__ = 'florianseidl'
 
+import env
 from jenkinscollector import JenkinsClient, JenkinsCollector
 from collector import HttpClient
 from urllib.request import HTTPError, URLError
@@ -8,7 +9,7 @@ from unittest.mock import MagicMock, Mock
 import os
 from datetime import datetime
 import re
-from cimon import JobStatus,Health,RequestStatus
+from cimon import Health,RequestStatus
 
 
 def read(file_name):
@@ -76,7 +77,9 @@ class TestJenkinsCollectorJobs(TestCase):
 
     def test_timestamp(self):
         status = self.do_collect_jobs(self.job_name_success)
-        self.assertEqual(datetime(2016, 3, 19, 23, 16, 22, 182000), status[("ci.sbb.ch", self.job_name_success)].timestamp)
+        self.assertAlmostEquals(datetime(2016, 3, 19, 23, 16, 22, 182000).timestamp(),
+                                status[("ci.sbb.ch", self.job_name_success)].timestamp.timestamp(),
+                                places=3)
 
     def test_culprits(self):
         status = self.do_collect_jobs(self.job_name_failed)
