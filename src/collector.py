@@ -12,6 +12,7 @@ import ssl
 import sys
 from os import path
 from configutil import decrypt
+from cimon import find_config_file_path
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,10 @@ def create_http_client(base_url, username = None, password = None, jwt_login_url
 def configure_client_cert(config, key=None):
     if not config:
         return None
-    return ClientCert(config['certfile'],config['keyfile'], decrypt(config.get('passwordEncrypted', None), key))
+    return ClientCert(
+        find_config_file_path(config['certfile']),
+        find_config_file_path(config['keyfile']),
+        decrypt(config.get('passwordEncrypted', None), key))
 
 # encrypt the certificate key using: openssl rsa -aes256 -in client.key -passout pass:<insert password here> -out client_enc.key
 class ClientCert:

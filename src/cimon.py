@@ -216,7 +216,7 @@ def configure_from_dict(configuration, key):
         __check_all_implement_method__(outputs, "on_update")
         operating_hours = __parse_hours_or_days__(configuration.get("operatingHours", "*"), "0-23")
         operating_days = __parse_hours_or_days__(configuration.get("operatingDays", "*"), "0-6")
-        max_threads=configuration.get("maxThreads",7)
+        max_threads=configuration.get("maxThreads", 7)
         logger.info("Read configuration: %s", configuration)
         return Cimon(polling_interval_sec = polling_interval_sec,
                      collectors = collectors,
@@ -300,8 +300,8 @@ if  __name__ =='__main__':
     parser.add_argument("--validate", action="store_true", help="Just validate the config file, do not run cimoon")
     args = parser.parse_args()
     # read yaml config file (mandatory)
-    configfilepath = args.config or find_config_file_path("cimon.yaml")
-    keypath = args.key or find_config_file_path("key.bin", True)
+    configfilepath = find_config_file_path(args.config or "cimon.yaml")
+    keypath = find_config_file_path(args.key or "key.bin", True)
     if args.validate:
         __validate_config__(configfilepath, keypath)
         sys.exit(0) # just validate the config, do not start. If an exception was raised it will exit with 1
