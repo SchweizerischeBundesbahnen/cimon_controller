@@ -130,6 +130,8 @@ output:
     # redColor: 00ff0000
     # greenColor: 0000ff00
     # yellowColor: 00ffff00
+    # allColor: 000000ff
+    # offColor: 00000000
     # flash code, please have a look at your playbulb manual for valid values, default is pulse with speed 04 04
     # flash: 01000404
     #

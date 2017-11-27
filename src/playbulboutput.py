@@ -15,6 +15,8 @@ default_flash = '01000404'
 default_yellow_color = '00ffff00'
 default_red_color = '00ff0000'
 default_green_color = '0000ff00'
+default_all_color = '000000ff'
+default_off_color = '00000000'
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,8 @@ def create(configuration, aesKey=None):
                               red_color=configuration.get("redColor", default_red_color),
                               green_color=configuration.get("greenColor", default_green_color),
                               yellow_color=configuration.get("yellowColor", default_yellow_color),
+                              all_color =configuration.get("allColor",default_all_color),
+                              off_color=configuration.get("offColor",default_off_color),
                               build_filter_pattern=configuration.get("buildFilterPattern", None),
                               collector_filter_pattern=configuration.get("collectorFilterPattern", None))
 
@@ -44,13 +48,15 @@ class PlaybulbBuildAmpel(AbstractBuildAmpel):
                  red_color=default_red_color,
                  green_color=default_green_color,
                  yellow_color=default_yellow_color,
+                 all_color=default_all_color,
+                 off_color=default_off_color,
                  build_filter_pattern=None,
                  collector_filter_pattern=None):
 
         super().__init__(signal_error_threshold=signal_error_threshold,
                          build_filter_pattern=build_filter_pattern,
                          collector_filter_pattern=collector_filter_pattern)
-        self.playbulb = PlaybulbAmpel(device, color_reg, flash_reg, flash, red_color, green_color, yellow_color)
+        self.playbulb = PlaybulbAmpel(device, color_reg, flash_reg, flash, red_color, green_color, yellow_color, all_color, off_color)
 
     def signal(self, red, yellow, green, flash=False):
         self.playbulb.display(red, yellow, green, flash)
@@ -60,7 +66,7 @@ class PlaybulbBuildAmpel(AbstractBuildAmpel):
 
 
 class PlaybulbAmpel():
-    def __init__(self, device, color_reg, flash_reg, flash, red_color, green_color, yellow_color):
+    def __init__(self, device, color_reg, flash_reg, flash, red_color, green_color, yellow_color, all_color, off_color):
         self.device = device
         self.color_reg = color_reg
         self.flash_reg = flash_reg
@@ -68,24 +74,28 @@ class PlaybulbAmpel():
         self.red_color = red_color
         self.green_color = green_color
         self.yellow_color = yellow_color
+        self.all_color = all_color
+        self.off_color = off_color
 
     def display(self, red=False, yellow=False, green=False, flash=False):
         register = self.color_reg
-        color = "00000000"
-
-        if red:
-            color = self.red_color
-        if green:
-            color = self.green_color
-        if yellow:
-            color = self.yellow_color
-
+        color = self.__color__(red, yellow, green)
         if flash:
             register = self.flash_reg
             color += self.flash
-
         command = "gatttool -b %s --char-write -a %s -n %s" % (self.device, register, color)
         return self.__call_gatttool__(command)
+
+    def __color__(self,red, yellow, green):
+        if red and yellow and green:
+            return self.all_color
+        if red:
+            return self.red_color
+        if yellow:
+            return self.yellow_color
+        if green:
+            return self.green_color
+        return self.off_color
 
     def __call_gatttool__(self, command):
         logger.debug(command)
