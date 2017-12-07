@@ -139,6 +139,20 @@ output:
     # buildFilterPattern: ".*"
     # collectorFilterPattern: ".*"
 
+  - implementation: hueoutput
+    #ipaddress: '<ip-address of hue bridge>'
+    #lamps: [<list-of-ids for your lamps>]
+    #unused: [<list-of-ids of unused lamps (i.e. lamps contained in "lamps" but not mapped below>]
+    #mappings:
+    #  '<arbitrary group name 1>':
+    #    builds: ['<jenkins-job-id1>','<jenkins-job-id2>', ...]
+    #    lamps: [<lamp-id1>]
+    #  '<arbitrary group name 2>':
+    #    builds: ['<jenkins-job-id3>']
+    #    lamps: [<lamp-id2>,<lamp-id3>,...]
+    # Note that each job can only be assigned to one group. A group can consist of one or more jobs. Each group can have
+    # one or more lamps assigned, but each lamp can only be assigned to one job.
+
 # logging configuration, will be passed on to the python loggin dictionary config 1:1.
 # will log from INFO to a file in /var/log/cimon/cimon.log and from CRITICAL to stderr
 # See https://docs.python.org/2/library/logging.config.html for details
