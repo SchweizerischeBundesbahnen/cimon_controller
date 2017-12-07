@@ -1,5 +1,9 @@
 #!/usr/bin/python3
+__author__ = 'ursbeeli'
 
+""" auxiliary program needed for first time connection between hue bridge and raspi
+    see hueoutput.py for more information
+"""
 import os,sys
 from phue import Bridge
 
