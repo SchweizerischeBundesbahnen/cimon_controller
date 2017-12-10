@@ -15,10 +15,9 @@ class MyOutput():
 
     def on_update(self, status):
         """Display the given status.
-        Status is a dict of status type, for instance { 'build' : {"<job_name_1>": {"request_status" : "error" | "not_found" | "ok", "result" : "failure" | "unstable" | "other" | "success"},
-                                                                    "<job_name_2>": {...},
-                                                                    ...}
-                                                       }
+        Status is a dict with key tuple (collector, job name) and value JobStatus,
+        for instance { (<collector1>, <job_name_1>) : <JobStatus Object>,
+                       (<collector1>, <job_name_2>) : <JobStatus Object>}
         """
         pass
 

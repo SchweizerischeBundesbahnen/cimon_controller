@@ -24,14 +24,84 @@ default_update_applications_every = 50
 logger = logging.getLogger(__name__)
 
 def create(configuration, key=None):
-    return NewRelicCollector(base_url = configuration["url"],
-                             api_key = configuration.get("apiKey", None) or decrypt(configuration.get("apiKeyEncyrpted", None), key),
-                             application_name_pattern= configuration.get("applicationNamePattern", r'.*'),
-                             refresh_applications_every=configuration.get("refreshApplicationsEvery", default_update_applications_every), # times
-                             name = configuration.get("name", None),
-                             verify_ssl=configuration.get("verifySsl", True))
+    type = configuration.get("type", "alerts")
+    if type == "applications":
+        return NewRelicApplicationsCollector(base_url = configuration["url"],
+                                             api_key = configuration.get("apiKey", None) or decrypt(configuration.get("apiKeyEncyrpted", None), key),
+                                             application_name_pattern= configuration.get("applicationNamePattern", None),
+                                             refresh_applications_every=configuration.get("refreshApplicationsEvery", default_update_applications_every),  # times
+                                             name = configuration.get("name", None),
+                                             verify_ssl=configuration.get("verifySsl", True))
+    elif type == "alerts":
+        return None
+    else:
+        raise ValueError("Unknown type of new relic collector: %s" % type)
 
-class NewRelicCollector:
+class NewRelicAlertsCollector:
+    priority_to_cimon_health = {
+        "critical" : Health.SICK,
+        "warning" : Health.UNWELL,
+        "info" : Health.HEALTHY}
+
+    def __init__(self,
+                 base_url,
+                 api_key,
+                 policy_name_pattern=None,
+                 condition_name_pattern=None,
+                 name=None,
+                 verify_ssl=True):
+        self.new_relic_client=BaseNewRelicClient(
+            http_client=create_http_client(base_url=base_url,fixed_headers={'X-Api-Key':api_key},verify_ssl=verify_ssl))
+        self.policy_name_pattern=re.compile(policy_name_pattern if policy_name_pattern  else r'.*')
+        self.condition_name_pattern=re.compile(condition_name_pattern if condition_name_pattern else r'.*')
+        self.name = name if name else urlparse(base_url).netloc
+
+    def collect(self):
+        status=self.__collect_alerts__()
+        logger.debug("Alert status collected: %s", status)
+        return status
+
+    def __collect_alerts__(self):
+        try:
+            return self.__to_status__(self.__filter__(self.new_relic_client.open_alert_violations()))
+        except HTTPError as e:
+            # ignore...
+            if(e.code == 404): # not found - its OK lets not crash
+                logger.warning("No applications found in new relic: : %s" % e.msg)
+                return {(self.name,"all") : JobStatus(RequestStatus.NOT_FOUND)}
+            else:
+                logger.exception("HTTP Error requesting status for job: %s" % e.msg)
+                return {(self.name,"all") : JobStatus(RequestStatus.ERROR)}
+        except URLError as e:
+            logger.exception("URL Error requesting status for job %s" % e)
+            return {(self.name,"all") : JobStatus(RequestStatus.ERROR)}
+
+    def __filter__(self, alert_violations):
+        return [alert for alert in alert_violations
+                      if self.policy_name_pattern.match(alert["policy_name"])
+                      and self.condition_name_pattern.match(alert["condition_name"])]
+
+    def __to_status__(self, alert_violations):
+        status = {}
+        for alert in alert_violations:
+            key = (self.name, alert["condition_name"])
+            job_status = self.__to_job_status__(alert)
+            if key not in status or job_status.health > status[key].health or job_status.timestamp > status[key].timestamp:
+                status[key] = job_status
+        return status
+
+    def __to_job_status__(self, alert):
+        return JobStatus(request_status=RequestStatus.OK,
+                         health=self.__to_cimon_health__(alert["priority"]),
+                         timestamp=datetime.fromtimestamp(alert["opened_at"]/1000.0),
+                         number=alert["id"])
+
+    def __to_cimon_health__(self, priority):
+        if not priority or priority.lower() not in self.priority_to_cimon_health:
+            return Health.UNDEFINED
+        return self.priority_to_cimon_health[priority.lower()]
+
+class NewRelicApplicationsCollector:
 
     # extract result and building state from the colors in the view
     health_status_to_cimon_health = {
@@ -44,7 +114,7 @@ class NewRelicCollector:
     def __init__(self,
                  base_url,
                  api_key,
-                 application_name_pattern=r'.*',
+                 application_name_pattern=None,
                  refresh_applications_every=default_update_applications_every,
                  name=None,
                  verify_ssl=True):
@@ -95,11 +165,17 @@ class BaseNewRelicClient():
     def applications_health(self):
         return self.__extract_health_status__(self.__load_all_applications__())
 
+    def open_alert_violations(self):
+        return self.__extract_violations__(json.loads(self.http_client.open_and_read("/v2/alerts_violations?only_open=true.json")))
+
     def __load_all_applications__(self):
         return json.loads(self.http_client.open_and_read("/v2/applications.json"))
 
     def __extract_health_status__(self, result):
         return {application['name']:application['health_status'] for application in result['applications']}
+
+    def __extract_violations__(self, alert_violations):
+        return alert_violations["violations"] if "violations" in alert_violations else []
 
 class ApplicationNameFilterNewRelicClient(BaseNewRelicClient):
     def __init__(self, http_client, application_name_pattern, refresh_applications_every):
@@ -135,7 +211,7 @@ if  __name__ =='__main__':
 
     """smoke test"""
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
-    collector = NewRelicCollector(
+    collector = NewRelicApplicationsCollector(
                         base_url=base_url,
                         app_key=app_key)
     print(collector.collect())

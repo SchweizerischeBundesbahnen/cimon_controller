@@ -48,16 +48,26 @@ sys.path.append("%s/cimon/plugins" % os.path.expanduser("~"))
 logger = logging.getLogger(__name__)
 
 class RequestStatus(Enum):
-    OK = 1
+    OK =        1
     NOT_FOUND = 2
-    ERROR = 3
+    ERROR =     3
+
+    def __gt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value > other.value
+        return NotImplemented
 
 class Health(Enum):
-    HEALTHY = 1
-    UNWELL = 2
-    SICK = 3
-    OTHER = 4
-    UNDEFINED = 5
+    UNDEFINED = 0
+    HEALTHY =  10
+    UNWELL =   20
+    OTHER =    21
+    SICK =     30
+
+    def __gt__(self, other):
+        if self.__class__ is other.__class__:
+            return self.value > other.value
+        return NotImplemented
 
 class JobStatus():
     def __init__(self,
