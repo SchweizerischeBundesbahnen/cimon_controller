@@ -24,18 +24,22 @@ default_update_applications_every = 50
 logger = logging.getLogger(__name__)
 
 def create(configuration, key=None):
-    type = configuration.get("type", "alerts")
-    if type == "applications":
+    if "type" not in configuration or configuration["type"] == "alerts":
+        return NewRelicAlertsCollector(base_url = configuration["url"],
+                                       api_key = configuration.get("apiKey", None) or decrypt(configuration.get("apiKeyEncyrpted", None), key),
+                                       policy_name_pattern=configuration.get("policyNamePattern", None),
+                                       condition_name_pattern=configuration.get("conditionNamePattern", None),
+                                       name = configuration.get("name", None),
+                                       verify_ssl=configuration.get("verifySsl", True))
+    elif configuration["type"] == "applications":
         return NewRelicApplicationsCollector(base_url = configuration["url"],
-                                             api_key = configuration.get("apiKey", None) or decrypt(configuration.get("apiKeyEncyrpted", None), key),
-                                             application_name_pattern= configuration.get("applicationNamePattern", None),
-                                             refresh_applications_every=configuration.get("refreshApplicationsEvery", default_update_applications_every),  # times
-                                             name = configuration.get("name", None),
-                                             verify_ssl=configuration.get("verifySsl", True))
-    elif type == "alerts":
-        return None
+                                         api_key = configuration.get("apiKey", None) or decrypt(configuration.get("apiKeyEncyrpted", None), key),
+                                         application_name_pattern= configuration.get("applicationNamePattern", None),
+                                         refresh_applications_every=configuration.get("refreshApplicationsEvery", default_update_applications_every),  # times
+                                         name = configuration.get("name", None),
+                                         verify_ssl=configuration.get("verifySsl", True))
     else:
-        raise ValueError("Unknown type of new relic collector: %s" % type)
+        raise ValueError("Unknown type of new relic collector: %s" % configuration["type"])
 
 class NewRelicAlertsCollector:
     priority_to_cimon_health = {
@@ -55,6 +59,7 @@ class NewRelicAlertsCollector:
         self.policy_name_pattern=re.compile(policy_name_pattern if policy_name_pattern  else r'.*')
         self.condition_name_pattern=re.compile(condition_name_pattern if condition_name_pattern else r'.*')
         self.name = name if name else urlparse(base_url).netloc
+        logger.info("configured new relic collector %s", self.__dict__)
 
     def collect(self):
         status=self.__collect_alerts__()
@@ -166,7 +171,7 @@ class BaseNewRelicClient():
         return self.__extract_health_status__(self.__load_all_applications__())
 
     def open_alert_violations(self):
-        return self.__extract_violations__(json.loads(self.http_client.open_and_read("/v2/alerts_violations?only_open=true.json")))
+        return self.__extract_violations__(json.loads(self.http_client.open_and_read("/v2/alerts_violations.json?only_open=true")))
 
     def __load_all_applications__(self):
         return json.loads(self.http_client.open_and_read("/v2/applications.json"))

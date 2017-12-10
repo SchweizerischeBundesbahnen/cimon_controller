@@ -83,6 +83,7 @@ class JenkinsCollector:
         self.max_parallel_requests = max_parallel_requests
         self.last_results={}
         self.name = name if name else urlparse(base_url).netloc
+        logger.info("configured jenkins collector %s", self.__dict__)
 
     def collect(self):
         method_param = [(self.collect_job, job_name) for job_name in self.job_names] + \
