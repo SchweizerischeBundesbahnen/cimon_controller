@@ -65,7 +65,7 @@ import time
 COLOUR_WHITE       = {'on':True, 'sat': 0,   'bri': 63, 'hue': 0}
 COLOUR_RED         = {'on':True, 'sat': 254, 'bri': 127, 'hue': 0}
 COLOUR_ORANGE      = {'on':True, 'sat': 254, 'bri': 255, 'hue': 5500}
-COLOUR_YELLOW      = {'on':True, 'sat': 254, 'bri': 127, 'hue': 12500}
+COLOUR_YELLOW      = {'on':True, 'sat': 254, 'bri': 127, 'hue': 17500}
 COLOUR_GREEN       = {'on':True, 'sat': 254, 'bri': 127, 'hue': 25500}
 COLOUR_LIGHT_BLUE  = {'on':True, 'sat': 254, 'bri': 127, 'hue': 40000}
 COLOUR_DARK_BLUE   = {'on':True, 'sat': 254, 'bri': 127, 'hue': 47000}
