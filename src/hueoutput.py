@@ -142,7 +142,7 @@ class HueOutput():
     def treatBuild(self, job, jobStatus):
        if job in self.groups:
           logger.debug("   - treating build: {}".format(job))
-          logger.debug("     jobStatus: {}".format(job))
+          logger.debug("     jobStatus: {}".format(jobStatus))
           logger.debug("     --> mapped build")
           status = jobStatus.request_status
           health = jobStatus.health
