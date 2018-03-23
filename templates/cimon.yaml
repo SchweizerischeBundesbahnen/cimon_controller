@@ -37,6 +37,9 @@ collector:
     # viewDepth: 0
     # the name to use for the collector internally. Optional, per default it is the hostname.
     # name: <name>
+    # some builds do not have a meaningfull name (for instance develop), in this case extract the name from the url via a regex group
+    # jobNameFromUrlPattern: <regex_with_groups>
+    # jobNameFromUrlPatternMatchGroup: 1
 
   # collect application status from new relic
   - implementation: newreliccollector

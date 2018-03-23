@@ -29,7 +29,6 @@ class TestJenkinsClient(TestCase):
         self.assertEqual(res, {"foo" : "bar"})
         c.http_client.open_and_read.assert_called_with("/job/myjob/lastBuild/api/json?depth=0")
 
-
     def test_http_exception_500(self):
         c = JenkinsClient(HttpClient("http://foo.bar"))
         c.http_client.open_and_read = Mock(spec=(""), return_value=self.json_str)
@@ -43,6 +42,7 @@ class TestJenkinsCollectorJobs(TestCase):
     job_name_failed = "mvp.mct.vermittler-orchestrierung_commons.continuous"
     job_name_unstable = "kd.esta.integrate.template.was3.it"
     job_name_building = "kd.sid.sid-library-ios.continuous"
+    job_name_noname = 'pt.cisi.orga_common_check_develop'
     url = "https://ci.sbb.ch"
 
     def do_collect_jobs(self, job_name, mock_open_and_read=None):
@@ -144,6 +144,11 @@ class TestJenkinsCollectorJobs(TestCase):
         self.assertEqual(Health.SICK, status[("ci.sbb.ch", self.job_name_building)].health)
         self.assertFalse(status[("ci.sbb.ch", self.job_name_building)].active)
 
+    def test_job_name_from_url(self):
+        col = JenkinsCollector(self.url, job_names= (self.job_name_noname, ), job_name_from_url_pattern='https://ci.sbb.ch/job/(.+)/\d+/')
+        col.jenkins.http_client.open_and_read = self.mock_open_and_read
+        status = col.collect()
+        self.assertIsNotNone(status[("ci.sbb.ch",'pt.cisi.orga/job/common-check/job/develop')])
 
 class TestJenkinsCollectorViews(TestCase):
     view_name_1 = "mvp/view/mct-new/view/mct-develop/view/continuous"
@@ -151,6 +156,7 @@ class TestJenkinsCollectorViews(TestCase):
     view_name_3 = "pz/view/tip/view/tip-all"
     view_name_building = "kd/view/sid"
     view_name_depth_2 = "pz/view/touri"
+    view_name_noname = "pt.view.cisi/view/01-build/view/91_xfd"
     url = "https://ci.sbb.ch"
 
     def do_collect_views(self, expected_nr_jobs, view_name, mock_open_and_read=None):
@@ -231,6 +237,13 @@ class TestJenkinsCollectorViews(TestCase):
         build = self.do_collect_views(22, view_name=self.view_name_building)
         self.assertEqual(6, len([k for (k, v) in build.items() if v.active]))
 
+    def test_job_name_from_url(self):
+        col = JenkinsCollector(self.url, view_names = (self.view_name_noname, ), job_name_from_url_pattern='https://ci.sbb.ch/job/(.+)')
+        col.jenkins.http_client.open_and_read = self.mock_open_and_read
+        builds = col.collect()
+        print(str(builds))
+
+
 class TestJenkinsCollectorNestedViews(TestCase):
     view_name_nested = "mvp/view/zvs-drittgeschaeft"
     view_name_nested_loop = "mvp/view/zvs-drittgeschaeft-fake-broken-with-loop"
@@ -246,7 +259,6 @@ class TestJenkinsCollectorNestedViews(TestCase):
 
     def test_nested_view_loop(self):
         self.testViews.do_collect_views(124, view_name=self.view_name_nested_loop, mock_open_and_read=self.mock_open_and_read_for_nested_view)
-
 
 class TestJenkinsCollectorJobsAndViews(TestCase):
 
