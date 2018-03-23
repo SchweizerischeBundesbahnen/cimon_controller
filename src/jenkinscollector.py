@@ -14,6 +14,7 @@ from collector import create_http_client, configure_client_cert
 from configutil import decrypt
 from cimon import JobStatus,RequestStatus,Health
 from urllib.parse import urlparse
+import re
 
 # Collect the build status in jenins via rest requests.
 # will request the status of the latestBuild of each job configured and each job in each view configured
@@ -45,7 +46,9 @@ def create(configuration, key=None):
                             verify_ssl = configuration.get("verifySsl", True),
                             view_depth = configuration.get("viewDepth", default_view_depth),
                             client_cert = configure_client_cert(configuration.get("clientCert", None), key),
-                            name = configuration.get('name', None))
+                            name = configuration.get('name', None),
+                            job_name_from_url_pattern=configuration.get('jobNameFromUrlPattern', None),
+                            job_name_from_url_pattern_match_group=configuration.get('jobNameFromUrlPatternMatchGroup', 1))
 
 class JenkinsCollector:
     # extract result and building state from the colors in the view
@@ -69,7 +72,9 @@ class JenkinsCollector:
                  verify_ssl=True,
                  view_depth=default_view_depth,
                  client_cert=None,
-                 name=None):
+                 name=None,
+                 job_name_from_url_pattern=None,
+                 job_name_from_url_pattern_match_group=1):
         self.jenkins = JenkinsClient(http_client=create_http_client(base_url=base_url,
                                                                     username=username,
                                                                     password=password,
@@ -83,6 +88,9 @@ class JenkinsCollector:
         self.max_parallel_requests = max_parallel_requests
         self.last_results={}
         self.name = name if name else urlparse(base_url).netloc
+        self.name_from_url_pattern_extractor = \
+                                NameFromUrlPatternExtractor(job_name_from_url_pattern, job_name_from_url_pattern_match_group) if job_name_from_url_pattern \
+                                else NoNameFromUrlPatternExtractor()
         logger.info("configured jenkins collector %s", self.__dict__)
 
     def collect(self):
@@ -99,15 +107,17 @@ class JenkinsCollector:
         logger.debug("Build status collected: %s", builds)
         return builds
 
-    def qualified_job_name(self, job_name):
-        return self.name, job_name
+    def qualified_job_name(self, job_name, url):
+        name_from_url = self.name_from_url_pattern_extractor.extract_name(url)
+        return self.name, name_from_url if name_from_url else job_name
 
     def collect_job(self, job_name):
         job_name, req_status, jenkins_build = self.__latest_build__(job_name)
+        job_url = jenkins_build["url"] if jenkins_build and "url" in jenkins_build else None
         if req_status == RequestStatus.OK:
-            return { self.qualified_job_name(job_name) : self.__convert_build__(job_name, jenkins_build)}
+            return { self.qualified_job_name(job_name, job_url) : self.__convert_build__(job_name, jenkins_build)}
         else:
-            return {self.qualified_job_name(job_name): JobStatus(request_status=req_status)}
+            return {self.qualified_job_name(job_name, job_url): JobStatus(request_status=req_status)}
 
     def __latest_build__(self, job_name):
         try:
@@ -162,12 +172,12 @@ class JenkinsCollector:
                     builds.update(self.__collect_view_recursive__(nested_view, allready_visited))
             return builds
         else:
-            return {self.qualified_job_name(view_name) : JobStatus(request_status=RequestStatus.ERROR)}
+            return {self.qualified_job_name(view_name, None) : JobStatus(request_status=RequestStatus.ERROR)}
 
     def __extract_job__status__(self, view):
         builds = {}
         for job in view["jobs"]:
-            jobname = self.qualified_job_name(job["name"])
+            jobname = self.qualified_job_name(job["name"], job["url"])
             status = None
             if "color" in job:
                 color_status_building = job["color"].split("_") if job["color"] else (None,)
@@ -229,6 +239,25 @@ class JenkinsClient():
 
     def view(self, view_name):
         return json.loads(self.http_client.open_and_read("/view/%s/api/json?depth=%d" % (view_name,self.view_depth)))
+
+class NameFromUrlPatternExtractor():
+    def __init__(self,
+                 name_from_url_pattern,
+                 name_from_url_pattern_match_group):
+        self.name_from_url_pattern=name_from_url_pattern
+        self.name_from_url_pattern_match_group=name_from_url_pattern_match_group
+
+    def extract_name(self, url):
+        if not url:
+            return None
+        matcher = re.search(self.name_from_url_pattern, url)
+        if not matcher or len(matcher.groups()) < self.name_from_url_pattern_match_group:
+            return None
+        return matcher.group(self.name_from_url_pattern_match_group)
+
+class NoNameFromUrlPatternExtractor():
+    def extract_name(self, url):
+        return None
 
 if  __name__ =='__main__':
     base_url = sys.argv[1]
