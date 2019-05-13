@@ -14,8 +14,9 @@ The setup of the device, start/stop scripts, autoupdate and so on are available 
 ![CIMON Architecture see cimon.vsd and cimon.png](cimon.png "CIMON Architecture")
 
 ## Prerequisites
-- Python 3.4
+- Python 3.4 or up
 - The yaml module has to be installed http://pyyaml.org/wiki/PyYAML
+- PyAES
 - For Cleware Output: The clewarecontrol command line application build and in path and the cleware device accessible as user
 - For Energenie Output: The sispmctl command line application build and in path and the energenie device accessible as user
 

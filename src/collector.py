@@ -197,7 +197,7 @@ class HttpClient:
 
     def open_and_read(self, request_path=None):
         response = self.open(request_path)
-        return response.readall().decode(response.headers.get_content_charset() or "utf-8")
+        return response.read().decode(response.headers.get_content_charset() or "utf-8")
 
     def open(self, request_path=None, retry=0):
         request_headers = self.authentication_handler.request_headers()
