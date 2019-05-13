@@ -16,8 +16,8 @@ def read(file_name):
     with open("%s/testdata/%s" % (os.path.dirname(__file__), file_name), encoding='utf-8') as f:
         return f.read()
 
-def to_filename(view_name):
-    return view_name.replace("/", "__")
+def to_filename(name):
+    return name.replace("/", "__")
 
 class TestJenkinsClient(TestCase):
     json_str = '{ "foo": "bar" }'
@@ -243,7 +243,6 @@ class TestJenkinsCollectorViews(TestCase):
         builds = col.collect()
         print(str(builds))
 
-
 class TestJenkinsCollectorNestedViews(TestCase):
     view_name_nested = "mvp/view/zvs-drittgeschaeft"
     view_name_nested_loop = "mvp/view/zvs-drittgeschaeft-fake-broken-with-loop"
@@ -276,6 +275,40 @@ class TestJenkinsCollectorJobsAndViews(TestCase):
         col.jenkins.http_client.open_and_read = Mock(spec=(""), side_effect=lambda x : [content_by_key[k] for k in content_by_key if k in x][0])
         status = col.collect()
         self.assertEqual(11, len(status))
+
+class TestJenkinsCollectorFolders(TestCase):
+    folder_name_1 = "PN_ES"
+    url = "https://ci.sbb.ch"
+
+    def test_collect_folder(self):
+        build = self.do_collect_folder(self.folder_name_1)
+        self.assertEqual(101 + 41, len(build))
+
+    def test_collect_folder_healthy(self):
+        build = self.do_collect_folder(self.folder_name_1)
+        self.assertEqual(Health.HEALTHY, build["aps-boot/master"].health)
+
+    def test_collect_folder_request_status(self):
+        build = self.do_collect_folder(self.folder_name_1)
+        self.assertEqual(RequestStatus.OK, build["aps-boot/master"].request_status)
+
+    def test_collect_folder_sick(self):
+        build = self.do_collect_folder(self.folder_name_1)
+        self.assertEqual(Health.SICK, build["aps-safety-logic/feature/refactorocs_attempt1"].health)
+
+    def test_collect_folder_active(self):
+        build = self.do_collect_folder(self.folder_name_1)
+        self.assertTrue(build["aps-safety-logic/feature/refactorocs_attempt1"].active)
+        self.assertFalse(build["aps-safety-logic/master"].active)
+
+    def do_collect_folder(self, folder_name):
+        col = JenkinsCollector(self.url, folder_names = (folder_name, ))
+        col.jenkins.http_client.open_and_read = self.mock_open_and_read
+        return col.collect()
+
+    def mock_open_and_read(self, request_path):
+        match = re.match("/job/(.*)/api/json", request_path)
+        return read("folder/" + to_filename(match.group(1).strip("/")))
 
 if __name__ == '__main__':
     main()

@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/cimon_controller.iml" filepath="$PROJECT_DIR$/cimon_controller.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../cimon_setup/cimon_setup.iml" filepath="$PROJECT_DIR$/../cimon_setup/cimon_setup.iml" />
     </modules>
   </component>
 </project>

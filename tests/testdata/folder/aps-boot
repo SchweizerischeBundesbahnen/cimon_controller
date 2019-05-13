@@ -1,0 +1,303 @@
+{
+"_class": "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject",
+"actions": [
+{},
+{},
+{
+"_class": "com.cloudbees.jenkins.plugins.bitbucket.BitbucketRepoMetadataAction"
+},
+{},
+{},
+{
+"_class": "jenkins.scm.api.metadata.ObjectMetadataAction"
+},
+{},
+{},
+{},
+{},
+{
+"_class": "com.cloudbees.plugins.credentials.ViewCredentialsAction"
+}
+],
+"description": null,
+"displayName": "aps-boot",
+"displayNameOrNull": null,
+"fullDisplayName": "Smart Rail 4.0 – ES » aps-boot",
+"fullName": "PN_ES/aps-boot",
+"name": "aps-boot",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/",
+"healthReport": [],
+"jobs": [
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.0",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.0/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.1",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.1/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.10",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.10/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.11",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.11/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.12",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.12/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.13",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.13/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.2",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.2/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.3",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.3/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.4",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.4/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.5",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.5/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.6",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.6/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.7",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.7/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.8",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.8/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.9",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/1.9/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "2.0",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/2.0/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "2.1",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/2.1/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "2.2",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/2.2/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "2.3",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/2.3/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "2.4",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/2.4/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "2.5",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/2.5/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "2.6",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/2.6/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2FESIA-55",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252FESIA-55/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fbefahrbarkeit",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fbefahrbarkeit/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fepic3tf1",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fepic3tf1/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Ffix_testrunner",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Ffix_testrunner/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fl1session_not_finished",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fl1session_not_finished/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fmp_request",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fmp_request/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fnodouble",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fnodouble/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Foa_path",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Foa_path/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Frefactor",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Frefactor/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Frefactorocs",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Frefactorocs/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fremove_superflous_messages",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fremove_superflous_messages/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fsc10",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fsc10/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fsc2",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fsc2/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fsc5",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fsc5/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fsc6",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fsc6/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fsc7",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fsc7/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fswagger_annoations",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fswagger_annoations/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fsz89",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Fsz89/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Futils_urls",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/feature%252Futils_urls/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "master",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/job/master/",
+"color": "blue"
+}
+],
+"primaryView": {
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "default",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/"
+},
+"views": [
+{
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "change-requests",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/view/change-requests/"
+},
+{
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "default",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/"
+},
+{
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "tags",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-boot/view/tags/"
+}
+],
+"sources": [
+{}
+]
+}
