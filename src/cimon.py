@@ -199,7 +199,7 @@ class Cimon():
 def read_yaml_file(file):
     # read the yaml config file
     with open(file, "r") as f:
-        cfg = yaml.load(f)
+        cfg = yaml.safe_load(f)
     return cfg
 
 def read_key_file(keypath):
