@@ -42,6 +42,7 @@ def create(configuration, key=None):
                             saml_login_url = configuration.get("samlLoginUrl", None),
                             job_names= configuration.get("jobs", ()),
                             view_names = configuration.get("views", ()),
+                            folder_names = configuration.get("folders", ()),
                             max_parallel_requests = configuration.get("maxParallelRequest", default_max_parallel_requests),
                             verify_ssl = configuration.get("verifySsl", True),
                             view_depth = configuration.get("viewDepth", default_view_depth),
@@ -66,6 +67,7 @@ class JenkinsCollector:
                  password = None,
                  job_names =(),
                  view_names = (),
+                 folder_names=(),
                  max_parallel_requests=default_max_parallel_requests,
                  jwt_login_url=None,
                  saml_login_url=None,
@@ -85,6 +87,7 @@ class JenkinsCollector:
                                                                     view_depth=view_depth)
         self.job_names = tuple(job_names)
         self.view_names = tuple(view_names)
+        self.folder_names = tuple(folder_names)
         self.max_parallel_requests = max_parallel_requests
         self.last_results={}
         self.name = name if name else urlparse(base_url).netloc
@@ -95,16 +98,21 @@ class JenkinsCollector:
 
     def collect(self):
         method_param = [(self.collect_job, job_name) for job_name in self.job_names] + \
-                       [(self.collect_view, view_name) for view_name in self.view_names]
+                       [(self.collect_view, view_name) for view_name in self.view_names] + \
+                       [(self.collect_folder, folder_name) for folder_name in self.folder_names]
 
+        builds = self.collect_async(method_param)
+        logger.debug("Build status collected: %s", builds)
+        return builds
+
+    def collect_async(self, method_param):
         with futures.ThreadPoolExecutor(max_workers=self.max_parallel_requests) as executor:
             future_requests = {executor.submit(method, param):
-                                    (method, param) for method, param in method_param}
+                                   (method, param) for method, param in method_param}
 
         builds = {}
         for future_request in futures.as_completed(future_requests):
             builds.update(future_request.result())
-        logger.debug("Build status collected: %s", builds)
         return builds
 
     def qualified_job_name(self, job_name, url):
@@ -178,18 +186,8 @@ class JenkinsCollector:
         builds = {}
         for job in view["jobs"]:
             jobname = self.qualified_job_name(job["name"], job["url"])
-            status = None
-            if "color" in job:
-                color_status_building = job["color"].split("_") if job["color"] else (None,)
-                if color_status_building[0] == "disabled":
-                    status = JobStatus(request_status=RequestStatus.NOT_FOUND)
-                elif color_status_building[0] in self.colors_to_result:
-                    status = JobStatus(
-                        health= self.colors_to_result[color_status_building[0]],
-                        active = len(color_status_building) > 1 and color_status_building[1] == "anime")
-                else:
-                     status = JobStatus(health=Health.OTHER)
-            if status and "builds" in job: # requires depth 2
+            status = self.__status_from_color__(job)
+            if "builds" in job: # requires depth 2
                 latest_build = self.__latest_build_in_view__(job)
                 if "number" in latest_build:
                     status.number = latest_build["number"]
@@ -197,9 +195,20 @@ class JenkinsCollector:
                     status.timestamp = datetime.fromtimestamp(latest_build["timestamp"] / 1000)
                 if "culprits" in latest_build:
                     status.names = [culprit["fullName"] for culprit in latest_build["culprits"]]
-            if status:
-                builds[jobname] = status
+            builds[jobname] = status
         return builds
+
+    def __status_from_color__(self, job):
+        if "color" in job:
+            color_status_building = job["color"].split("_") if job["color"] else (None,)
+            if color_status_building[0] == "disabled":
+                return JobStatus(request_status=RequestStatus.NOT_FOUND)
+            elif color_status_building[0] in self.colors_to_result:
+                return JobStatus(
+                    health= self.colors_to_result[color_status_building[0]],
+                    active = len(color_status_building) > 1 and color_status_building[1] == "anime")
+        logger.warn('Missing attribute "color" in job description %s' % job)
+        return JobStatus(health=Health.OTHER)
 
     def __latest_build_in_view__(self, job):
         latest = {}
@@ -227,6 +236,40 @@ class JenkinsCollector:
             # ignore...
             logger.exception("Error occured requesting info for view %s" % view_name)
 
+    def collect_folder(self, folder_name):
+        folder = self.__folder__(folder_name)
+        method_param = [(self.collect_multibranch_pipeline, pipeline["name"]) for pipeline in folder["jobs"]]
+        return self.collect_async(method_param)
+
+    def collect_multibranch_pipeline(self, folder_name):
+        pipeline = self.__multibranch_pipeline__(folder_name)
+        builds = {}
+        for job in pipeline["jobs"]:
+            status = self.__status_from_color__(job)
+            builds[self.__pipeline_name__(folder_name, job["url"])] = status
+            logger.debug("Converted Mulitbranc pipeline build result: %s", str(status))
+        return builds
+
+    def __pipeline_name__(self, folder_name, url):
+        return "%s/%s" %(folder_name, self.__branch_from_url__(url))
+
+    def __branch_from_url__(self, url):
+        return url.split("/")[-2].replace('%252F', '/')
+
+    def __folder__(self, folder_name):
+        try:
+            return self.jenkins.folder(folder_name)
+        except:
+            # ignore...
+            logger.exception("Error occured requesting info for folder %s" % folder_name)
+
+    def __multibranch_pipeline__(self, folder_name):
+        try:
+            return self.jenkins.multibranch_pipeline(folder_name)
+        except:
+            # ignore...
+            logger.exception("Error occured requesting info for folder %s" % folder_name)
+
 class JenkinsClient():
     """ copied and simplifed from jenkinsapi by Willow Garage in order to ensure singe requests for latest build
         as oposed to multiple requests and local status"""
@@ -239,6 +282,12 @@ class JenkinsClient():
 
     def view(self, view_name):
         return json.loads(self.http_client.open_and_read("/view/%s/api/json?depth=%d" % (view_name,self.view_depth)))
+
+    def folder(self, folder_name):
+        return json.loads(self.http_client.open_and_read("/job/%s/api/json?tree=jobs[name]" % (folder_name)))
+
+    def multibranch_pipeline(self, pipeline_name):
+        return json.loads(self.http_client.open_and_read("/job/%s/api/json" % (pipeline_name)))
 
 class NameFromUrlPatternExtractor():
     def __init__(self,

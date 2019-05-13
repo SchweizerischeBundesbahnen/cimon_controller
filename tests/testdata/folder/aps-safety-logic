@@ -1,0 +1,670 @@
+{
+"_class": "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject",
+"actions": [
+{},
+{},
+{
+"_class": "com.cloudbees.jenkins.plugins.bitbucket.BitbucketRepoMetadataAction"
+},
+{},
+{},
+{
+"_class": "jenkins.scm.api.metadata.ObjectMetadataAction"
+},
+{},
+{},
+{},
+{},
+{
+"_class": "com.cloudbees.plugins.credentials.ViewCredentialsAction"
+}
+],
+"description": null,
+"displayName": "aps-safety-logic",
+"displayNameOrNull": null,
+"fullDisplayName": "Smart Rail 4.0 – ES » aps-safety-logic",
+"fullName": "PN_ES/aps-safety-logic",
+"name": "aps-safety-logic",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/",
+"healthReport": [
+{
+"description": "Worst health: Smart Rail 4.0 – ES » aps-safety-logic » feature/l1session_not_finished: Build-Stabilität: In letzter Zeit schlugen alle Builds fehl.",
+"iconClassName": "icon-health-00to19",
+"iconUrl": "health-00to19.png",
+"score": 0
+}
+],
+"jobs": [
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.0",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.0/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.1",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.1/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.10",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.10/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.11",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.11/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.12",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.12/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.13",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.13/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.14",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.14/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.15",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.15/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.16",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.16/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.17",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.17/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.18",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.18/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.19",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.19/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.2",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.2/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.20",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.20/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.21",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.21/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.22",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.22/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.23",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.23/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.24",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.24/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.25",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.25/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.26",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.26/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.27",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.27/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.28",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.28/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.29",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.29/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.3",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.3/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.30",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.30/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.31",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.31/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.32",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.32/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.33",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.33/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.34",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.34/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.35",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.35/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.36",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.36/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.37",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.37/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.38",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.38/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.39",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.39/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.4",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.4/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.40",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.40/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.41",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.41/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.42",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.42/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.43",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.43/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.44",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.44/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.45",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.45/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.46",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.46/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.47",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.47/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.48",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.48/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.49",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.49/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.5",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.5/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.50",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.50/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.51",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.51/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.52",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.52/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.53",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.53/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.54",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.54/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.55",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.55/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.56",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.56/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.57",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.57/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.58",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.58/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.59",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.59/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.6",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.6/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.60",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.60/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.61",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.61/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.62",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.62/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.63",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.63/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.64",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.64/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.65",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.65/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.66",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.66/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.67",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.67/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.68",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.68/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.69",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.69/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.7",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.7/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.70",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.70/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.71",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.71/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.72",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.72/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.73",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.73/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.74",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.74/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.75",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.75/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.76",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.76/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.77",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.77/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.78",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.78/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.79",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.79/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.8",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.8/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.80",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.80/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.81",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.81/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.82",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.82/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.83",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.83/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.84",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.84/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.85",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.85/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.86",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.86/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.87",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.87/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.88",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.88/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.89",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.89/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.9",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.9/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "1.90",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/1.90/",
+"color": "notbuilt"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fbefahrbarkeit",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/feature%252Fbefahrbarkeit/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fl1session_not_finished",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/feature%252Fl1session_not_finished/",
+"color": "red"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fmovingmob",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/feature%252Fmovingmob/",
+"color": "red"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Foa_path",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/feature%252Foa_path/",
+"color": "red"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Foccupancy",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/feature%252Foccupancy/",
+"color": "red"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Fpartialspeedmarkers",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/feature%252Fpartialspeedmarkers/",
+"color": "red"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Frefactorocs_attempt1",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/feature%252Frefactorocs_attempt1/",
+"color": "red_anime"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Frename",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/feature%252Frename/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "feature%2Futils_urls",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/feature%252Futils_urls/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "master",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/job/master/",
+"color": "blue"
+}
+],
+"primaryView": {
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "default",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/"
+},
+"views": [
+{
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "change-requests",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/view/change-requests/"
+},
+{
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "default",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/"
+},
+{
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "tags",
+"url": "https://ci.sbb.ch/job/PN_ES/job/aps-safety-logic/view/tags/"
+}
+],
+"sources": [
+{}
+]
+}

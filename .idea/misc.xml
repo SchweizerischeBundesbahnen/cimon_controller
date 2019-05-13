@@ -10,7 +10,7 @@
     <option name="pathToConfigFileJava" value="$PROJECT_DIR$/../../../settings/eclipse-code-formatter/eclipse-sbb-formatter.xml" />
     <option name="selectedJavaProfile" value="sbb_formatter_profile" />
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" default="false" project-jdk-name="Python 3.4" project-jdk-type="Python SDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" default="false" project-jdk-name="Python 3.6" project-jdk-type="Python SDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>
