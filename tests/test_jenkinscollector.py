@@ -286,20 +286,20 @@ class TestJenkinsCollectorFolders(TestCase):
 
     def test_collect_folder_healthy(self):
         build = self.do_collect_folder(self.folder_name_1)
-        self.assertEqual(Health.HEALTHY, build["aps-boot/master"].health)
+        self.assertEqual(Health.HEALTHY, build[("ci.sbb.ch", "PN_ES/aps-boot/master")].health)
 
     def test_collect_folder_request_status(self):
         build = self.do_collect_folder(self.folder_name_1)
-        self.assertEqual(RequestStatus.OK, build["aps-boot/master"].request_status)
+        self.assertEqual(RequestStatus.OK, build[("ci.sbb.ch", "PN_ES/aps-boot/master")].request_status)
 
     def test_collect_folder_sick(self):
         build = self.do_collect_folder(self.folder_name_1)
-        self.assertEqual(Health.SICK, build["aps-safety-logic/feature/refactorocs_attempt1"].health)
+        self.assertEqual(Health.SICK, build[("ci.sbb.ch", "PN_ES/aps-safety-logic/feature/refactorocs_attempt1")].health)
 
     def test_collect_folder_active(self):
         build = self.do_collect_folder(self.folder_name_1)
-        self.assertTrue(build["aps-safety-logic/feature/refactorocs_attempt1"].active)
-        self.assertFalse(build["aps-safety-logic/master"].active)
+        self.assertTrue(build[("ci.sbb.ch", "PN_ES/aps-safety-logic/feature/refactorocs_attempt1")].active)
+        self.assertFalse(build[("ci.sbb.ch", "PN_ES/aps-safety-logic/master")].active)
 
     def do_collect_folder(self, folder_name):
         col = JenkinsCollector(self.url, folder_names = (folder_name, ))
