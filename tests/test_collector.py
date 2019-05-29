@@ -109,7 +109,7 @@ class TestHttpClient(TestCase):
                        authentication_handler= authentication_handler,
                        retry_delay_sec=0)
         response = SimpleNamespace()
-        response.readall = Mock(spec=(""), return_value=response_str.encode("UTF-8"))
+        response.read = Mock(spec=(""), return_value=response_str.encode("UTF-8"))
         response.headers = SimpleNamespace()
         response.headers.get_content_charset= Mock(spec=(""), return_value="UTF-8")
         response.getheader = Mock(spec=(""), return_value=header)
