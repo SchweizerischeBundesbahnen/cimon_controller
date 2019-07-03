@@ -86,6 +86,9 @@ def create(configuration, key=None):
 
 class HueOutput():
     def __init__(self, ipaddress, lamps, unused, mappings):
+        if not ipaddress:
+          return
+          
         self.ipaddress = ipaddress
         self.lamps = lamps
         self.unused = unused
