@@ -7,7 +7,6 @@ collector:
 output:
   - implementation: clewareampeloutput
   - implementation: energenieoutput
-  - implementation: playbulboutput
 
 logging:
   version: 1
