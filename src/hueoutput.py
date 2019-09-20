@@ -181,6 +181,7 @@ class HueOutput():
             logger.debug("     mapping controls lamps: {}".format(mapping.lamps))
             if mapping.name not in self.states:
                 self.states[mapping.name] = {}
+                self.states[mapping.name]["lamps"] = mapping.lamps
                 self.states[mapping.name]["status"] = status
                 self.states[mapping.name]["health"] = health
                 self.states[mapping.name]["active"] = active
@@ -232,15 +233,15 @@ class HueOutput():
         logger.debug("   - lamps: {}".format(self.lamps))
         logger.debug("   - states: {}".format(self.states))
         for build in self.states:
-            mapping = self.mappings[build]
             logger.debug("   build: {}".format(build))
             state = self.states[build]
             logger.debug("   state: {}".format(state))
-            logger.debug("   lamps: {}".format(mapping.lamps))
+            lamps = state["lamps"]
+            logger.debug("   lamps: {}".format(lamps))
             colour = self.getColour(state)
             logger.debug("   colour: {}".format(colour))
-            self.setLamps(mapping.lamps, colour)
-            treated = treated + mapping.lamps
+            self.setLamps(lamps, colour)
+            treated = treated + lamps
         untreated = [x for x in self.lamps if x not in self.unused and x not in treated]
         logger.debug("   - set untreated lamps to white: {}".format(untreated))
         self.setLamps(untreated, COLOUR_WHITE)
