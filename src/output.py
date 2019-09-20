@@ -65,11 +65,18 @@ class NameFilter():
            logger.debug("filtered by collector pattern %s: %s" % (self.collector_pattern, filtered))
         if self.job_name_pattern:
             filtered = self.filter_by_pattern(filtered, self.job_name_pattern, 1)
-            logger.debug("filtered by collector pattern and job name pattern %s: %s" % (self.job_name_pattern, filtered))
+            logger.debug("filtered by job name pattern %s: %s" % (self.job_name_pattern, filtered))
         return filtered
 
     def filter_by_pattern(self, status, pattern, index):
         return {k: v for k, v in status.items() if pattern.match(k[index])}
+
+    def matches(self, url, jobName):
+        return self.__match__(self.collector_pattern, url) and \
+               self.__match__(self.job_name_pattern, jobName)
+
+    def __match__(self, pattern, string):
+        return not pattern or pattern.match(string)
 
 # Abstract base classes for outputs
 class AbstractBuildOutput():
