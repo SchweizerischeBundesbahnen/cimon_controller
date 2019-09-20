@@ -57,12 +57,11 @@ CONFIGURATION:
 
 import logging.config
 import time
-import re
-from output import NameFilter
 
 from phue import Bridge
 
 from cimon import RequestStatus, Health
+from output import NameFilter
 
 # hue lamp colours, determined by experimentation, not all of them are used
 COLOUR_WHITE = {'on': True, 'sat': 0, 'bri': 63, 'hue': 0}
@@ -90,6 +89,9 @@ def create(configuration, key=None):
                      mappings=configuration.get("mappings", []))
 
 
+""" Represents the output of builds to a lamp or a group of lamps switched synchronously"""
+
+
 class Mapping():
     def __init__(self, name, builds, job_name_pattern, collector_pattern, lamps):
         self.name = name
@@ -99,6 +101,7 @@ class Mapping():
 
     def matches(self, url, job):
         return job in self.builds or self.filter.matches(url, job)
+
 
 class HueOutput():
     def __init__(self, ipaddress, lamps, unused, mappings):
@@ -173,11 +176,9 @@ class HueOutput():
             logger.debug("     request status: {}".format(status))
             logger.debug("     build health: {}".format(health))
             logger.debug("     build active: {}".format(active))
-            builds = mapping["builds"]
-            lamps = mapping["lamps"]
             logger.debug("     build belongs to mapping: {}".format(mapping.name))
-            logger.debug("     mapping covers builds: {}".format(builds))
-            logger.debug("     mapping controls lamps: {}".format(lamps))
+            logger.debug("     mapping covers builds: {}".format(mapping.builds))
+            logger.debug("     mapping controls lamps: {}".format(mapping.lamps))
             if mapping.name not in self.states:
                 self.states[mapping.name] = {}
                 self.states[mapping.name]["status"] = status
@@ -195,6 +196,7 @@ class HueOutput():
         return next((mapping for mapping in self.mappings if mapping.matches(url, job)), None)
 
     """ determine lamp colour depending on request_status and health """
+
     def getColour(self, state):
         result = LAMP_OFF
         status = state["status"]
@@ -231,18 +233,17 @@ class HueOutput():
         logger.debug("   - states: {}".format(self.states))
         for build in self.states:
             mapping = self.mappings[build]
-            lamps = mapping["lamps"]
             logger.debug("   build: {}".format(build))
             state = self.states[build]
             logger.debug("   state: {}".format(state))
-            logger.debug("   lamps: {}".format(lamps))
+            logger.debug("   lamps: {}".format(mapping.lamps))
             colour = self.getColour(state)
             logger.debug("   colour: {}".format(colour))
-            self.setLamps(lamps, colour)
-            treated = treated + lamps
+            self.setLamps(mapping.lamps, colour)
+            treated = treated + mapping.lamps
         untreated = [x for x in self.lamps if x not in self.unused and x not in treated]
-        # logger.debug("   - set untreated lamps to white: {}".format(untreated))
-        # self.setLamps(untreated, COLOUR_WHITE)
+        logger.debug("   - set untreated lamps to white: {}".format(untreated))
+        self.setLamps(untreated, COLOUR_WHITE)
         logger.debug("   - set unused lamps off: {}".format(self.unused))
         self.setLamps(self.unused, LAMP_OFF)
 
@@ -275,8 +276,6 @@ class HueOutput():
         logger.debug("-> Updating Lamps")
         self.updateLamps()
         logger.debug("--- HueOutput.onUpdate done ---")
-        logger.debug()
-        pass
 
 
 if __name__ == '__main__':
