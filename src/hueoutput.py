@@ -48,7 +48,8 @@ CONFIGURATION:
         builds: ['<jenkins-job-id1>','<jenkins-job-id2>', ...]
         lamps: [<lamp-id1>]
       '<arbitrary group name 2>':
-        builds: ['<jenkins-job-id3>']
+        buildFilterPattern: 'regex for build names'
+        collectorFilterPattern: 'regex for build sources (like ci.sbb.ch)"
         lamps: [<lamp-id2>,<lamp-id3>,...]
 
   Note that each job can only be assigned to one group. A group can consist of one or more jobs. Each group can have
@@ -74,8 +75,8 @@ COLOUR_DARK_BLUE = {'on': True, 'sat': 254, 'bri': 127, 'hue': 47000}
 COLOUR_BLUE_VIOLET = {'on': True, 'sat': 254, 'bri': 127, 'hue': 50000}
 COLOUR_VIOLET = {'on': True, 'sat': 254, 'bri': 127, 'hue': 55000}
 COLOUR_PINK = {'on': True, 'sat': 254, 'bri': 127, 'hue': 60000}
-FLASHING = {
-    'alert': 'lselect'}  # will flash the lamp between two brightnesses with the current colour, only lasts 15 seconds
+# will flash the lamp between two brightnesses with the current colour, only lasts 15 seconds
+FLASHING = {'alert': 'lselect'}
 LAMP_OFF = {"on": False, "transitiontime": 0}
 
 logger = logging.getLogger(__name__)
@@ -106,14 +107,13 @@ class Mapping():
 class HueOutput():
     def __init__(self, ipaddress, lamps, unused, mappings):
         if not ipaddress:
-          return
-          
+            raise ValueError("No ipaddress configured in hueoutput")
+
         self.ipaddress = ipaddress
         self.lamps = lamps
         self.unused = unused
         self.mappings = mappings
         self.mappings = self.createMappings(mappings)
-        self.states = {}
         logger.debug("--- HueOutput.init() start ---")
         logger.debug(" - ipaddress: {}".format(ipaddress))
         logger.debug(" - lamps: {}".format(lamps))
@@ -150,16 +150,16 @@ class HueOutput():
             mappings.append(mapping)
         return mappings
 
-    """ sets the state for a list of lamps
-        as the bridge can only handle a limited number of lamps (depending on the amount of "state" being sent)
+    """ sets the colour for a list of lamps
+        as the bridge can only handle a limited number of lamps (depending on the amount of "colour" being sent)
         we will break down large lamp lists into lists of 6 lamps and then wait until the bridge has
         processed theses commands before sending the data for the next 6 lamps
     """
 
-    def setLamps(self, lamps, state):
+    def setLamps(self, lamps, colour):
         if len(lamps) > 0:
             for i in range(0, len(lamps), 6):
-                self.bridge.set_light(lamps[i:i + 6], state)
+                self.bridge.set_light(lamps[i:i + 6], colour)
                 time.sleep(0.5)
 
     """ handle the state of one single jenkinds build job
@@ -167,7 +167,7 @@ class HueOutput():
         the result will be written into the states dictionary for later output to the lamps
     """
 
-    def treatBuild(self, url, job, jobStatus):
+    def treatBuild(self, states, url, job, jobStatus):
         mapping = self.mappingpForJob(url, job)
         if mapping:
             logger.debug("   - treating build: {}".format(job))
@@ -182,19 +182,19 @@ class HueOutput():
             logger.debug("     build belongs to mapping: {}".format(mapping.name))
             logger.debug("     mapping covers builds: {}".format(mapping.builds))
             logger.debug("     mapping controls lamps: {}".format(mapping.lamps))
-            if mapping.name not in self.states:
-                self.states[mapping.name] = {}
-                self.states[mapping.name]["lamps"] = mapping.lamps
-                self.states[mapping.name]["status"] = status
-                self.states[mapping.name]["health"] = health
-                self.states[mapping.name]["active"] = active
+            if mapping.name not in states:
+                states[mapping.name] = {}
+                states[mapping.name]["lamps"] = mapping.lamps
+                states[mapping.name]["status"] = status
+                states[mapping.name]["health"] = health
+                states[mapping.name]["active"] = active
             # consolidate for "worst" value if multiple builds contribute to one group
-            if status.value > self.states[mapping.name]["status"].value:
-                self.states[mapping.name]["status"] = status
-            if health.value > self.states[mapping.name]["health"].value:
-                self.states[mapping.name]["health"] = health
+            if status.value > states[mapping.name]["status"].value:
+                states[mapping.name]["status"] = status
+            if health.value > states[mapping.name]["health"].value:
+                states[mapping.name]["health"] = health
             if active:
-                self.states[mapping.name]["active"] = active
+                states[mapping.name]["active"] = True
 
     def mappingpForJob(self, url, job):
         return next((mapping for mapping in self.mappings if mapping.matches(url, job)), None)
@@ -207,37 +207,33 @@ class HueOutput():
         health = state["health"]
         active = state["active"]
         if status == RequestStatus.ERROR:
-            result = COLOUR_BLUE_VIOLET
+            result = dict(COLOUR_BLUE_VIOLET)
         elif status == RequestStatus.NOT_FOUND:
-            result = COLOUR_VIOLET
+            result = dict(COLOUR_VIOLET)
         elif status == RequestStatus.OK:
             if health == Health.HEALTHY:
-                result = COLOUR_GREEN
+                result = dict(COLOUR_GREEN)
             elif health == Health.UNWELL:
-                result = COLOUR_YELLOW
+                result = dict(COLOUR_YELLOW)
             elif health == Health.SICK:
-                result = COLOUR_RED
+                result = dict(COLOUR_RED)
             elif health == Health.OTHER:
-                result = COLOUR_LIGHT_BLUE
+                result = dict(COLOUR_LIGHT_BLUE)
             elif health == Health.UNDEFINED:
-                result = COLOUR_DARK_BLUE
-            else:
-                pass
-        else:
-            pass
+                result = dict(COLOUR_DARK_BLUE)
         if active:
             result.update(FLASHING)
         return result
 
     """ iterate over the state of all groups and set the lamps accordingly """
 
-    def updateLamps(self):
+    def updateLamps(self, states):
         treated = []
         logger.debug("   - lamps: {}".format(self.lamps))
-        logger.debug("   - states: {}".format(self.states))
-        for build in self.states:
+        logger.debug("   - states: {}".format(states))
+        for build in states:
             logger.debug("   build: {}".format(build))
-            state = self.states[build]
+            state = states[build]
             logger.debug("   state: {}".format(state))
             lamps = state["lamps"]
             logger.debug("   lamps: {}".format(lamps))
@@ -270,15 +266,15 @@ class HueOutput():
         """
         logger.debug("--- HueOutput.onUpdate start ---")
         logger.debug("- status contains {} entries".format(len(status)))
-        self.states = {}
+        states = {}
         items = status.items()
         logger.debug("-> Evaluating Jobs")
         for key, value in items:
             url = key[0]
             job = key[1]
-            self.treatBuild(url, job, value)
+            self.treatBuild(url, states, job, value)
         logger.debug("-> Updating Lamps")
-        self.updateLamps()
+        self.updateLamps(states)
         logger.debug("--- HueOutput.onUpdate done ---")
 
 
