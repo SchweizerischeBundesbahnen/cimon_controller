@@ -43,7 +43,6 @@ CONFIGURATION:
     ipaddress: '<ip-address of hue bridge>'
     lamps: [<list-of-ids for your lamps>]
     unused: [<list-of-ids of unused lamps (i.e. lamps contained in "lamps" but not mapped below>]
-    flash15sec: True
     transitiontimeMillis: 400 
     mappings:
       '<arbitrary group name 1>':
@@ -56,7 +55,6 @@ CONFIGURATION:
 
   Note that each job can only be assigned to one group. A group can consist of one or more jobs. Each group can have
   one or more lamps assigned, but each lamp can only be assigned to one job.
-  flash15sec is optional, default is True. If set to false, flashing is permanent until the next update
   transitiontimeMillis is optional, default is 400 
 """
 
@@ -82,9 +80,6 @@ COLOUR_VIOLET = {'on': True, 'sat': 254, 'bri': 127, 'hue': 55000}
 COLOUR_PINK = {'on': True, 'sat': 254, 'bri': 127, 'hue': 60000}
 # will flash the lamp between two brightnesses with the current colour, only lasts 15 seconds
 FLASHING_15SEC = {'alert': 'lselect'}
-# will flash the lamp between two brightnesses with the current colour until alert: none is sent
-FLASHING_PERMANENTLY = {'alert': 'select'}
-NO_FLASHING = {'alert': 'none'}
 # 400 ms is the hue default
 DEFAULT_TRANSITIONTIME_MILLIS = 400
 
@@ -96,8 +91,7 @@ def create(configuration, key=None):
                      lamps=configuration.get("lamps", []),
                      unused=configuration.get("unused", []),
                      mappings=configuration.get("mappings", []),
-                     transitiontimeMillis=configuration.get("transitiontimeMillis", DEFAULT_TRANSITIONTIME_MILLIS),
-                     flash15sec=configuration.get("flash15sec", True))
+                     transitiontimeMillis=configuration.get("transitiontimeMillis", DEFAULT_TRANSITIONTIME_MILLIS))
 
 
 """ Represents the output of builds to a lamp or a group of lamps switched synchronously"""
@@ -115,7 +109,7 @@ class Mapping():
 
 
 class HueOutput():
-    def __init__(self, ipaddress, lamps, unused, mappings, transitiontimeMillis, flash15sec):
+    def __init__(self, ipaddress, lamps, unused, mappings, transitiontimeMillis):
         if not ipaddress:
             raise ValueError("No ipaddress configured in hueoutput")
 
@@ -125,14 +119,12 @@ class HueOutput():
         self.mappings = mappings
         self.mappings = self.createMappings(mappings)
         self.transitiontime = {'transitiontime': transitiontimeMillis // 100 } # given in 10th of seconds
-        self.flashing = FLASHING_15SEC if flash15sec else FLASHING_PERMANENTLY
         logger.debug("--- HueOutput.init() start ---")
         logger.debug(" - ipaddress: {}".format(self.ipaddress))
         logger.debug(" - lamps: {}".format(self.lamps))
         logger.debug(" - unused: {}".format(self.unused))
         logger.debug(" - mappings: {}".format(self.mappings))
         logger.debug(" - transitiontime: {}".format(self.transitiontime))
-        logger.debug(" - flashing: {}".format(self.flashing))
 
         # initialise bridge connection
         self.bridge = Bridge(ipaddress)
@@ -236,7 +228,7 @@ class HueOutput():
             elif health == Health.UNDEFINED:
                 result.update(COLOUR_DARK_BLUE)
         if active:
-            result.update(self.flashing)
+            result.update(FLASHING_15SEC)
         result.update(self.transitiontime)
         return result
 
