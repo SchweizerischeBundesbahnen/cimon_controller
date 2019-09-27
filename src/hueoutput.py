@@ -49,7 +49,7 @@ CONFIGURATION:
         lamps: [<lamp-id1>]
       '<arbitrary group name 2>':
         buildFilterPattern: 'regex for build names'
-        collectorFilterPattern: 'regex for build sources (like ci.sbb.ch)"
+        collectorFilterPattern: 'regex for build sources (like ci.sbb.ch)'
         lamps: [<lamp-id2>,<lamp-id3>,...]
 
   Note that each job can only be assigned to one group. A group can consist of one or more jobs. Each group can have
@@ -272,7 +272,7 @@ class HueOutput():
         for key, value in items:
             url = key[0]
             job = key[1]
-            self.treatBuild(url, states, job, value)
+            self.treatBuild(states, url, job, value)
         logger.debug("-> Updating Lamps")
         self.updateLamps(states)
         logger.debug("--- HueOutput.onUpdate done ---")
