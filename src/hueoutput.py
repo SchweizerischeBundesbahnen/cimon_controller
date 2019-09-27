@@ -124,7 +124,7 @@ class HueOutput():
         self.unused = unused
         self.mappings = mappings
         self.mappings = self.createMappings(mappings)
-        self.transitiontime = {'transitiontime': transitiontimeMillis / 100 } # given in 10th of seconds
+        self.transitiontime = {'transitiontime': transitiontimeMillis // 100 } # given in 10th of seconds
         self.flashing = FLASHING_15SEC if flash15sec else FLASHING_PERMANENTLY
         logger.debug("--- HueOutput.init() start ---")
         logger.debug(" - ipaddress: {}".format(self.ipaddress))
