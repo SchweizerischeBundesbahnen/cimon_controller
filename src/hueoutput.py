@@ -64,6 +64,7 @@ from phue import Bridge
 from cimon import RequestStatus, Health
 from output import NameFilter
 
+LAMP_OFF = {'on': False, 'transitiontime': 0, 'alert': 'none'}
 # hue lamp colours, determined by experimentation, not all of them are used
 COLOUR_WHITE = {'on': True, 'sat': 0, 'bri': 63, 'hue': 0}
 COLOUR_RED = {'on': True, 'sat': 254, 'bri': 127, 'hue': 0}
@@ -76,8 +77,10 @@ COLOUR_BLUE_VIOLET = {'on': True, 'sat': 254, 'bri': 127, 'hue': 50000}
 COLOUR_VIOLET = {'on': True, 'sat': 254, 'bri': 127, 'hue': 55000}
 COLOUR_PINK = {'on': True, 'sat': 254, 'bri': 127, 'hue': 60000}
 # will flash the lamp between two brightnesses with the current colour, only lasts 15 seconds
-FLASHING = {'alert': 'lselect'}
-LAMP_OFF = {"on": False, "transitiontime": 0}
+FLASHING_15SEC = {'alert': 'lselect'}
+# will flash the lamp between two brightnesses with the current colour until alert: none is sent
+FLASHING_PERMANENTLY = {'alert': 'select'}
+NO_FLASHING = {'alert': 'none'}
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +90,9 @@ def create(configuration, key=None):
     return HueOutput(ipaddress=configuration.get("ipaddress", None),
                      lamps=configuration.get("lamps", []),
                      unused=configuration.get("unused", []),
-                     mappings=configuration.get("mappings", []))
+                     mappings=configuration.get("mappings", []),
+                     transitiontime=configuration.get("transitiontime", 0),
+                     flash15sec=configuration.get("flash15sec", True))
 
 
 """ Represents the output of builds to a lamp or a group of lamps switched synchronously"""
@@ -105,7 +110,7 @@ class Mapping():
 
 
 class HueOutput():
-    def __init__(self, ipaddress, lamps, unused, mappings):
+    def __init__(self, ipaddress, lamps, unused, mappings, transitiontime, flash15sec):
         if not ipaddress:
             raise ValueError("No ipaddress configured in hueoutput")
 
@@ -114,11 +119,15 @@ class HueOutput():
         self.unused = unused
         self.mappings = mappings
         self.mappings = self.createMappings(mappings)
+        self.transitiontime = {'transitiontime': transitiontime}
+        self.flashing = FLASHING_15SEC if flash15sec else FLASHING_PERMANENTLY
         logger.debug("--- HueOutput.init() start ---")
         logger.debug(" - ipaddress: {}".format(ipaddress))
         logger.debug(" - lamps: {}".format(lamps))
         logger.debug(" - unused: {}".format(unused))
         logger.debug(" - mappings: {}".format(mappings))
+        logger.debug(" - transitiontime: {}".format(transitiontime))
+        logger.debug(" - flash15sec: {}".format(flash15sec))
 
         # initialise bridge connection
         self.bridge = Bridge(ipaddress)
@@ -202,27 +211,28 @@ class HueOutput():
     """ determine lamp colour depending on request_status and health """
 
     def getColour(self, state):
-        result = LAMP_OFF
+        result = dict(LAMP_OFF)
         status = state["status"]
         health = state["health"]
         active = state["active"]
         if status == RequestStatus.ERROR:
-            result = dict(COLOUR_BLUE_VIOLET)
+            result.update(COLOUR_BLUE_VIOLET)
         elif status == RequestStatus.NOT_FOUND:
-            result = dict(COLOUR_VIOLET)
+            result.update(COLOUR_VIOLET)
         elif status == RequestStatus.OK:
             if health == Health.HEALTHY:
-                result = dict(COLOUR_GREEN)
+                result.update(COLOUR_GREEN)
             elif health == Health.UNWELL:
-                result = dict(COLOUR_YELLOW)
+                result.update(COLOUR_YELLOW)
             elif health == Health.SICK:
-                result = dict(COLOUR_RED)
+                result.update(COLOUR_RED)
             elif health == Health.OTHER:
-                result = dict(COLOUR_LIGHT_BLUE)
+                result.update(COLOUR_LIGHT_BLUE)
             elif health == Health.UNDEFINED:
-                result = dict(COLOUR_DARK_BLUE)
+                result.update(COLOUR_DARK_BLUE)
         if active:
-            result.update(FLASHING)
+            result.update(self.flashing)
+        result.update(self.transitiontime)
         return result
 
     """ iterate over the state of all groups and set the lamps accordingly """
