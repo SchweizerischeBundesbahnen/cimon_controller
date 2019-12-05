@@ -56,7 +56,8 @@ class JenkinsCollector:
     colors_to_result = {"red" : Health.SICK,
                         "yellow" : Health.UNWELL,
                         "blue" : Health.HEALTHY,
-                        "notbuilt" : Health.UNDEFINED}
+                        "notbuilt" : Health.UNDEFINED,
+                        "aborted" : Health.UNDEFINED}
     jenkins_result_to_result = {"SUCCESS" : Health.HEALTHY,
                                 "UNSTABLE" : Health.UNWELL,
                                 "FAILURE": Health.SICK}
