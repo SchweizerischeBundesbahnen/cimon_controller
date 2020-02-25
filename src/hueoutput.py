@@ -8,7 +8,17 @@ This implements the output for PHILIPS HUE Lamps.
 
 PREREQUISITES:
   You must have an ip connection from your raspi to the hue bridge
-  The easiest way to acomplish this is to connect the raspi and hue bridge to a router, serving as dhcp server using ethernet
+
+Method A: Using DHCP
+   This is the way recommended with the default CIMON Setup (start.
+   Prerequisite, automatically performed by CIMON setup: Configure the DHCPD on your Rasberrys eth0. This is automatically done by CIMON setup, so you dont have to do anything.
+   1) connect your hue bridge 
+   2) check the IP address of your rasberry using "cat /var/lib/dhcp/dhcpd.leases"
+   3) call python3 /opt/cimon/controller/hue-connect.py and enter that IP address
+   done
+  
+Method B: Using a router
+  The other way to acomplish this is to connect the raspi and hue bridge to a router, serving as dhcp server using ethernet
   However, as the raspi should not use the dhcp of the router but only dhcp provided by the sbbfree wlan, a few adjustments
   need to be made
 
@@ -35,6 +45,7 @@ PREREQUISITES:
 
      Then enter the hue bridge's ip address, press the "pairing button" on the bridge and then press enter.
      This will write the "hue api user key" into ~/.python_hue
+
 
 CONFIGURATION:
   Create the following block in your cimon.yaml file

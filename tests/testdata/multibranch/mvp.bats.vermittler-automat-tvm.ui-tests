@@ -1,0 +1,75 @@
+{
+"_class": "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject",
+"actions": [
+{},
+{},
+{},
+{
+"_class": "com.cloudbees.jenkins.plugins.bitbucket.BitbucketRepoMetadataAction"
+},
+{},
+{},
+{
+"_class": "jenkins.scm.api.metadata.ObjectMetadataAction"
+},
+{},
+{},
+{
+"_class": "com.cloudbees.plugins.credentials.ViewCredentialsAction"
+}
+],
+"description": "<br/>\n--> <a href=\"http://automat-scenarioo.app.test04.otc-test.sbb.ch/scenarioo/\" target=\"_blank\">Scenarioo</a><br/>\n<br/>",
+"displayName": "TVM UI-Tests",
+"displayNameOrNull": "TVM UI-Tests",
+"fullDisplayName": "TVM UI-Tests",
+"fullName": "mvp.bats.vermittler-automat-tvm.ui-tests",
+"name": "mvp.bats.vermittler-automat-tvm.ui-tests",
+"url": "https://ci.sbb.ch/job/mvp.bats.vermittler-automat-tvm.ui-tests/",
+"healthReport": [
+{
+"description": "Worst health: TVM UI-Tests » bugfix/20.1.3: Build-Stabilität: 1 der letzten 5 Builds schlug fehl.",
+"iconClassName": "icon-health-60to79",
+"iconUrl": "health-60to79.png",
+"score": 80
+}
+],
+"jobs": [
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "bugfix%2F20.1.3",
+"url": "https://ci.sbb.ch/job/mvp.bats.vermittler-automat-tvm.ui-tests/job/bugfix%252F20.1.3/",
+"color": "blue"
+},
+{
+"_class": "org.jenkinsci.plugins.workflow.job.WorkflowJob",
+"name": "develop",
+"url": "https://ci.sbb.ch/job/mvp.bats.vermittler-automat-tvm.ui-tests/job/develop/",
+"color": "blue"
+}
+],
+"primaryView": {
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "default",
+"url": "https://ci.sbb.ch/job/mvp.bats.vermittler-automat-tvm.ui-tests/"
+},
+"views": [
+{
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "change-requests",
+"url": "https://ci.sbb.ch/job/mvp.bats.vermittler-automat-tvm.ui-tests/view/change-requests/"
+},
+{
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "default",
+"url": "https://ci.sbb.ch/job/mvp.bats.vermittler-automat-tvm.ui-tests/"
+},
+{
+"_class": "jenkins.branch.MultiBranchProjectViewHolder$ViewImpl",
+"name": "tags",
+"url": "https://ci.sbb.ch/job/mvp.bats.vermittler-automat-tvm.ui-tests/view/tags/"
+}
+],
+"sources": [
+{}
+]
+}

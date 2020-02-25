@@ -32,6 +32,8 @@ collector:
     views: []
     # a list of organisational folders in jenkins. Usually you wil have exactly one if you use Jenkinsfiles (and none if you dont).
     #folders: []
+    # a list of multibranch pipelines outside of folders or to be collected specifically.
+    #multibranch_pipelines: []
     # maximum number of parallel requests to the jenkins server. Default is 7.
     # maxParallelRequest: 7
     # the depth parameter in the api query to jenkins when querying views (depth=x). The higher the more data is sent.

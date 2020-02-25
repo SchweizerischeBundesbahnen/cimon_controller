@@ -43,6 +43,7 @@ def create(configuration, key=None):
                             job_names= configuration.get("jobs", ()),
                             view_names = configuration.get("views", ()),
                             folder_names = configuration.get("folders", ()),
+                            multibranch_pipeline_names = configuration.get("multibranch_pipelines", ()),
                             max_parallel_requests = configuration.get("maxParallelRequest", default_max_parallel_requests),
                             verify_ssl = configuration.get("verifySsl", True),
                             view_depth = configuration.get("viewDepth", default_view_depth),
@@ -69,6 +70,7 @@ class JenkinsCollector:
                  job_names =(),
                  view_names = (),
                  folder_names=(),
+                 multibranch_pipeline_names=(),
                  max_parallel_requests=default_max_parallel_requests,
                  jwt_login_url=None,
                  saml_login_url=None,
@@ -89,6 +91,7 @@ class JenkinsCollector:
         self.job_names = tuple(job_names)
         self.view_names = tuple(view_names)
         self.folder_names = tuple(folder_names)
+        self.multibranch_pipeline_names = tuple(multibranch_pipeline_names)
         self.max_parallel_requests = max_parallel_requests
         self.last_results={}
         self.name = name if name else urlparse(base_url).netloc
@@ -100,7 +103,8 @@ class JenkinsCollector:
     def collect(self):
         method_param = [(self.collect_job, job_name) for job_name in self.job_names] + \
                        [(self.collect_view, view_name) for view_name in self.view_names] + \
-                       [(self.collect_folder, folder_name) for folder_name in self.folder_names]
+                       [(self.collect_folder, folder_name) for folder_name in self.folder_names]  + \
+                       [(self.collect_multibranch_pipeline_standalone, multibranch_pipeline_name) for multibranch_pipeline_name in self.multibranch_pipeline_names]
 
         builds = self.collect_async(method_param)
         logger.debug("Build status collected: %s", builds)
@@ -239,27 +243,36 @@ class JenkinsCollector:
 
     def collect_folder(self, folder_name):
         folder = self.__folder__(folder_name)
-        method_param = [(self.collect_multibranch_pipeline, (folder_name, pipeline["name"])) for pipeline in folder["jobs"]]
+        method_param = [(self.collect_multibranch_pipeline_in_folder, (folder_name, multibranch["name"])) for multibranch in folder["jobs"]]
         return self.collect_async(method_param)
 
-    def collect_multibranch_pipeline(self, folder_pipeline_name):
-        return self.do_collect_multibranch_pipeline(*folder_pipeline_name)
+    def collect_multibranch_pipeline_in_folder(self, folder_multibranch_pipeline_name):
+        return self.map_multibranch_pipeline(
+            self.__pipeline_name__(*folder_multibranch_pipeline_name),
+            self.__multibranch_pipeline_in_folder__(*folder_multibranch_pipeline_name))
 
-    def do_collect_multibranch_pipeline(self, folder_name, pipeline_name):
-        pipeline = self.__multibranch_pipeline__(folder_name, pipeline_name)
+    def collect_multibranch_pipeline_standalone(self, pipeline_name):
+        return self.map_multibranch_pipeline(
+            pipeline_name,
+            self.__multibranch_pipeline_standalone__(pipeline_name))
+
+    def map_multibranch_pipeline(self, pipeline_name, pipeline):
         if not pipeline:
-            logger.debug("No builds in pipeline %s/%s" % (folder_name, pipeline_name))
+            logger.debug("No builds in pipeline %s" % (pipeline_name))
             return {}
         builds = {}
         for job in pipeline["jobs"]:
             status = self.__status_from_color__(job)
             builds[(self.name,
-                    self.__pipeline_job_name__(folder_name, pipeline_name, job["url"]))] = status
+                    self.__pipeline_job_name__(pipeline_name, job["url"]))] = status
             logger.debug("Converted Mulitbranch pipeline build result: %s", str(status))
         return builds
 
-    def __pipeline_job_name__(self, folder_name, pipeline_name, url):
-        return "%s/%s/%s" %(folder_name, pipeline_name, self.__branch_from_url__(url))
+    def __pipeline_name__(self, folder_name, multibranch_pipeline_name):
+        return "%s/%s" %(folder_name, multibranch_pipeline_name)
+
+    def __pipeline_job_name__(self, pipeline_name, url):
+        return "%s/%s" %(pipeline_name, self.__branch_from_url__(url))
 
     def __branch_from_url__(self, url):
         return url.split("/")[-2].replace('%252F', '/')
@@ -271,12 +284,19 @@ class JenkinsCollector:
             # ignore...
             logger.exception("Error occured requesting info for folder %s" % folder_name)
 
-    def __multibranch_pipeline__(self, folder_name, pipeline_name):
+    def __multibranch_pipeline_in_folder__(self, folder_name, multibranch_pipeline_name):
         try:
-            return self.jenkins.multibranch_pipeline(folder_name, pipeline_name)
+            return self.jenkins.multibranch_pipeline_in_folder(folder_name, multibranch_pipeline_name)
         except:
             # ignore...
-            logger.exception("Error occured requesting info for pipeline %s/%s" % (folder_name, pipeline_name))
+            logger.exception("Error occured requesting info for pipeline in folder %s" % self.__pipeline_name__(folder_name, multibranch_pipeline_name))
+
+    def __multibranch_pipeline_standalone__(self,  multibranch_pipeline_name):
+        try:
+            return self.jenkins.multibranch_pipeline_standalone(multibranch_pipeline_name)
+        except:
+            # ignore...
+            logger.exception("Error occured requesting info for pipeline standalone %s" % multibranch_pipeline_name)
 
 class JenkinsClient():
     """ copied and simplifed from jenkinsapi by Willow Garage in order to ensure singe requests for latest build
@@ -294,8 +314,11 @@ class JenkinsClient():
     def folder(self, folder_name):
         return json.loads(self.http_client.open_and_read("/job/%s/api/json?tree=jobs[name]" % (folder_name)))
 
-    def multibranch_pipeline(self, folder_name, pipeline_name):
-        return json.loads(self.http_client.open_and_read("/job/%s/job/%s/api/json" % (folder_name, pipeline_name)))
+    def multibranch_pipeline_in_folder(self, folder_name, multibranch_pipeline_name):
+        return json.loads(self.http_client.open_and_read("/job/%s/job/%s/api/json" % (folder_name, multibranch_pipeline_name)))
+
+    def multibranch_pipeline_standalone(self, multibranch_pipeline_name):
+        return json.loads(self.http_client.open_and_read("/job/%s/api/json" % (multibranch_pipeline_name)))
 
 class NameFromUrlPatternExtractor():
     def __init__(self,

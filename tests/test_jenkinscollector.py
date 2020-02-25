@@ -310,5 +310,34 @@ class TestJenkinsCollectorFolders(TestCase):
         match = re.match("/job/(.*)/api/json", request_path)
         return read("folder/" + to_filename(match.group(1).strip("/")))
 
+class TestJenkinsCollectorMultibranch(TestCase):
+    multibranch_pipeline_name = 'mvp.bats.vermittler-automat-tvm.ui-tests'
+    url = "https://ci.sbb.ch"
+
+    def test_collect_multibranch_pipeline(self):
+        build = self.do_collect_multibranch_pipeline(self.multibranch_pipeline_name)
+        self.assertEqual(2, len(build))
+
+    def test_collect_multibranch_pipeline_healthy(self):
+        build = self.do_collect_multibranch_pipeline(self.multibranch_pipeline_name)
+        self.assertEqual(Health.HEALTHY, build[("ci.sbb.ch", "mvp.bats.vermittler-automat-tvm.ui-tests/develop")].health)
+
+    def test_collect_multibranch_pipeline_request_status(self):
+        build = self.do_collect_multibranch_pipeline(self.multibranch_pipeline_name)
+        self.assertEqual(RequestStatus.OK, build[("ci.sbb.ch", "mvp.bats.vermittler-automat-tvm.ui-tests/develop")].request_status)
+
+    def test_collect_multibranch_pipeline_active(self):
+        build = self.do_collect_multibranch_pipeline(self.multibranch_pipeline_name)
+        self.assertFalse(build[("ci.sbb.ch", "mvp.bats.vermittler-automat-tvm.ui-tests/bugfix/20.1.3")].active)
+
+    def do_collect_multibranch_pipeline(self, multibranch_pipeline_name):
+        col = JenkinsCollector(self.url, multibranch_pipeline_names = (multibranch_pipeline_name, ))
+        col.jenkins.http_client.open_and_read = self.mock_open_and_read
+        return col.collect()
+
+    def mock_open_and_read(self, request_path):
+        match = re.match("/job/(.*)/api/json", request_path)
+        return read("multibranch/" + to_filename(match.group(1).strip("/")))
+
 if __name__ == '__main__':
     main()
