@@ -1,6 +1,5 @@
 __author__ = 'florianseidl'
 
-import env
 import collections
 import os
 from types import SimpleNamespace
