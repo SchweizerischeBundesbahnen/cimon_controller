@@ -148,12 +148,21 @@ class JenkinsCollector:
             return (job_name, RequestStatus.ERROR, None)
 
     def __convert_build__(self, job_name, jenkins_build_result):
+        if "actions" in jenkins_build_result and len(jenkins_build_result["actions"])>0 and "causes" in jenkins_build_result["actions"][0] and len(jenkins_build_result["actions"][0]["causes"])>0:
+            cause = jenkins_build_result["actions"][0]["causes"][0]["shortDescription"]
+        else:
+            cause = None
         status = JobStatus(
             health=self.__convert_store_fill_job_result__(job_name, jenkins_build_result["result"]),
             active=jenkins_build_result["building"],
             timestamp=datetime.fromtimestamp(jenkins_build_result["timestamp"]/1000.0),
             number=jenkins_build_result["number"],
-            names=[culprit["fullName"] for culprit in jenkins_build_result["culprits"]] if "culprits" in jenkins_build_result else [])
+            names=[culprit["fullName"] for culprit in jenkins_build_result["culprits"]] if "culprits" in jenkins_build_result else [],
+            duration=jenkins_build_result["duration"] if "duration" in jenkins_build_result else None,
+            fullDisplayName=jenkins_build_result["fullDisplayName"],
+            url=jenkins_build_result["url"],
+            builtOn=jenkins_build_result["builtOn"] if "builtOn" in jenkins_build_result else None,
+            cause=cause)
         logger.debug("Converted Build result: %s", str(status))
         return status
 

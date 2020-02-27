@@ -76,13 +76,23 @@ class JobStatus():
                  active=False,
                  timestamp=None,
                  number=None,
-                 names=None):
+                 names=None,
+                 duration=None,
+                 fullDisplayName=None,
+                 url=None,
+                 builtOn=None,
+                 cause=None):
         self.request_status = request_status
         self.health = health
         self.active = active
         self.timestamp = timestamp
         self.number=number
         self.names=names
+        self.duration=duration
+        self.fullDisplayName=fullDisplayName
+        self.url=url
+        self.builtOn=builtOn
+        self.cause=cause
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
