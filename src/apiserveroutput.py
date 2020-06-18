@@ -1,5 +1,7 @@
 # Copyright (C) Schweizerische Bundesbahnen SBB, 2016
 # Python 3.4
+from webbrowser import get
+
 __author__ = 'florianseidl'
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -29,17 +31,20 @@ def create(configuration, key=None):
         raise ValueError("There is allready one API server configured, only one is allwowed")
     host = configuration.get("host", default_host)
     port = configuration.get("port", default_port)
+    build_filter_pattern=configuration.get("buildFilterPattern", None),
     collector_filter = NameFilter(configuration["collectorFilterPattern"]) if "collectorFilterPattern" in configuration else NameFilter()
     views_from_config = configuration.get("views", {}) # view: pattern
     for view_name, pattern in views_from_config.items():
         views[view_name] =  re.compile(pattern if pattern else r'.*')
     created = True
+    set_shared_config(configuration.get("web", {}))
     return ApiServerOutput()
 
 created = False
 host = default_host
 port = default_port
 __shared_status__ = {}
+__shared_config__ = {}
 server = None
 server_lock = RLock()
 collector_filter=NameFilter()
@@ -75,6 +80,13 @@ def set_shared_status(status):
 def get_shared_status():
     return __shared_status__.copy()
 
+def set_shared_config(config):
+    global __shared_config__
+    __shared_config__ = config
+
+def get_shared_config():
+    return __shared_config__.copy()
+
 class ApiServerOutput():
     """Template for your own output device."""
 
@@ -105,6 +117,8 @@ class ApiServer():
 
     def handle_get(self, path):
         try:
+            if(path == "/config"):
+                return self.handle_config()
             status = get_shared_status()
             logger.info("handle_get: %s", path)
             if "all" in status and status["all"].request_status == RequestStatus.ERROR:
@@ -150,6 +164,9 @@ class ApiServer():
             return (200, self.__to_jenkins_view_result__(filteredView))
         else:
             return (404, 'Unknown view "%s"' % view)
+
+    def handle_config(self):
+        return (200, get_shared_config())
 
     def __to_jenkins_job_result__(self, job_status):
         jenkins_response = {
