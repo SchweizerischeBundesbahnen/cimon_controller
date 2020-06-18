@@ -92,8 +92,8 @@ class ApiServerOutput():
 class ApiServer():
     """ A delegate to the delegate (HTTPRequestHander) as is easy to test """
 
-    job_request_pattern = re.compile("/job/([\w\.-]*)/lastBuild/api/json.*")
-    view_request_pattern = re.compile("/view/([\w\.-\/]*)/api/json.*")
+    job_request_pattern = re.compile("/job/([\w\.\-\/_]*)/lastBuild/api/json.*")
+    view_request_pattern = re.compile("/view/([\w\.\-\/_]*)/api/json.*")
 
     result_to_color = {Health.SICK  : "red",
                        Health.UNWELL : "yellow",
@@ -106,28 +106,40 @@ class ApiServer():
     def handle_get(self, path):
         try:
             status = get_shared_status()
+            logger.info("handle_get: %s", path)
             if "all" in status and status["all"].request_status == RequestStatus.ERROR:
                return (500, "Error requesting any job")
             else:
                 job_match = self.job_request_pattern.match(path)
                 if job_match and len(job_match.groups()) > 0:
+                    logger.info("job_match value=%s", job_match.group(1))
                     return self.handle_job(job=job_match.group(1), status=status)
                 else:
                     view_match = self.view_request_pattern.match(path)
                     if view_match and len(view_match.groups()) > 0:
+                        logger.info("view_match value=%s", view_match.group(1))
                         return self.handle_view(view=view_match.group(1), status=status)
                     else:
+                        logger.info("no job_match and no view_match")
                         return (404, 'Path "%s" is not handled.' % path)
         except Exception:
-            logging.error("Error handing HTTP Request", exc_info=True)
+            logging.error("Error handling HTTP Request", exc_info=True)
             return (500, str(sys.exc_info()))
 
     def handle_job(self, job, status):
-        if job in status and status[job].request_status == RequestStatus.OK:
-            return (200, self.__to_jenkins_job_result__(status[job]))
-        elif job in status and status[job].request_status == RequestStatus.ERROR:
+        jobWithSlash=job+'/'
+        # config can contain job name with or without terminating slash; regexp always delivers job name without terminating slash
+        if job in status:
+            job_status=status[job]
+        elif jobWithSlash in status:
+            job_status=status[jobWithSlash]
+        else:
+            job_status = None
+        if job_status and job_status.request_status == RequestStatus.OK:
+            return (200, self.__to_jenkins_job_result__(job_status))
+        elif job_status and job_status.request_status == RequestStatus.ERROR:
             return (500, 'Error requesting job "%s"' % job)
-        elif job in status and status[job].request_status == RequestStatus.NOT_FOUND:
+        elif job_status and job_status.request_status == RequestStatus.NOT_FOUND:
             return (404, "Not found for job %s" % job)
         else:
             return (404, 'Unkonwn build job "%s"' % job)
@@ -150,6 +162,16 @@ class ApiServer():
             jenkins_response["timestamp"] = job_status.timestamp.timestamp() * 1000
         if job_status.names:
             jenkins_response["culprits"] = [{"fullName" : name} for name in job_status.names]
+        if job_status.duration:
+            jenkins_response["duration"] = job_status.duration
+        if job_status.fullDisplayName:
+            jenkins_response["fullDisplayName"] = job_status.fullDisplayName
+        if job_status.url:
+            jenkins_response["url"] = job_status.url
+        if job_status.builtOn:
+            jenkins_response["builtOn"] = job_status.builtOn
+        if job_status.cause:
+            jenkins_response["actions"] = [{"causes": [{"shortDescription": job_status.cause}]}]
         return jenkins_response
 
     def __to_jenkins_view_result__(self, jobs_status):
@@ -169,7 +191,6 @@ class ApiServer():
             return color
         else:
             return "disabled"
-
 
 class ApiServerRequestHandler(BaseHTTPRequestHandler):
     """ A shallow adapter to the Python http request handler as it is hard to test"""
