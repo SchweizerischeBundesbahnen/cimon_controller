@@ -104,8 +104,7 @@ class ApiServerOutput():
 class ApiServer():
     """ A delegate to the delegate (HTTPRequestHander) as is easy to test """
 
-    job_request_pattern = re.compile("/job/([\w\.\-\/_]*)/lastBuild/api/json.*")
-    view_request_pattern = re.compile("/view/([\w\.\-\/_]*)/api/json.*")
+    job_request_pattern = re.compile("/job/([\w\.\-/_]*)/lastBuild/api/json.*")
 
     result_to_color = {Health.SICK  : "red",
                        Health.UNWELL : "yellow",
@@ -119,6 +118,9 @@ class ApiServer():
         try:
             if(path == "/config"):
                 return self.handle_config()
+            if(path == "/jobs"):
+                status = get_shared_status()
+                return self.list_all_jobs(status=status)
             status = get_shared_status()
             logger.info("handle_get: %s", path)
             if "all" in status and status["all"].request_status == RequestStatus.ERROR:
@@ -129,17 +131,22 @@ class ApiServer():
                     logger.info("job_match value=%s", job_match.group(1))
                     return self.handle_job(job=job_match.group(1), status=status)
                 else:
-                    view_match = self.view_request_pattern.match(path)
-                    if view_match and len(view_match.groups()) > 0:
-                        logger.info("view_match value=%s", view_match.group(1))
-                        return self.handle_view(view=view_match.group(1), status=status)
-                    else:
-                        logger.info("no job_match and no view_match")
-                        return (404, 'Path "%s" is not handled.' % path)
+                    logger.info("no job_match")
+                    return (404, 'Path "%s" is not handled.' % path)
         except Exception:
             logging.error("Error handling HTTP Request", exc_info=True)
             return (500, str(sys.exc_info()))
 
+    def list_all_jobs(self, status):
+        return (200, self.__to_jenkins_job_list__(status.keys()))
+
+    def __to_jenkins_job_list__(selfself, keys):
+        jenkins_response = {
+            "jobs": [key for key in keys]
+        }
+        logging.info("job list", jenkins_response)
+        return jenkins_response
+    
     def handle_job(self, job, status):
         jobWithSlash=job+'/'
         # config can contain job name with or without terminating slash; regexp always delivers job name without terminating slash
