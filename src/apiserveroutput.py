@@ -26,25 +26,22 @@ default_views = {"all" : re.compile(r'.*')}
 
 def create(configuration, key=None):
     """Create an instance (called by cimon.py)"""
-    global host, port, created, views, collector_filter
+    global host, port, created, views
     if created: # safeguard against double creation since we use global variables
         raise ValueError("There is allready one API server configured, only one is allwowed")
     host = configuration.get("host", default_host)
     port = configuration.get("port", default_port)
-    build_filter_pattern=configuration.get("buildFilterPattern", None),
-    collector_filter = NameFilter(configuration["collectorFilterPattern"]) if "collectorFilterPattern" in configuration else NameFilter()
     views_from_config = configuration.get("views", {}) # view: pattern
     for view_name, pattern in views_from_config.items():
         views[view_name] =  re.compile(pattern if pattern else r'.*')
     created = True
-    set_shared_config(configuration.get("web", {}))
-    return ApiServerOutput()
+    return ApiServerOutput(build_filter_pattern=configuration.get("buildFilterPattern", None),
+                           collector_filter_pattern = configuration.get("collectorFilterPattern", None))
 
 created = False
 host = default_host
 port = default_port
 __shared_status__ = {}
-__shared_config__ = {}
 server = None
 server_lock = RLock()
 collector_filter=NameFilter()
@@ -80,22 +77,16 @@ def set_shared_status(status):
 def get_shared_status():
     return __shared_status__.copy()
 
-def set_shared_config(config):
-    global __shared_config__
-    __shared_config__ = config
-
-def get_shared_config():
-    return __shared_config__.copy()
-
 class ApiServerOutput():
-    """Template for your own output device."""
+    def __init__(self, build_filter_pattern=None, collector_filter_pattern=None):
+        self.build_filter = NameFilter(collector_pattern=collector_filter_pattern,job_name_pattern=build_filter_pattern)
 
     def on_update(self, status):
         start_http_server_if_not_started()
-        set_shared_status(self.filter_status_by_collector(status))
+        set_shared_status(self.__filter_status__(status))
 
-    def filter_status_by_collector(self, status):
-        filtered = collector_filter.filter_status(status)
+    def __filter_status__(self, status):
+        filtered = self.build_filter.filter_status(status)
         return {k[1]:v for k,v in filtered.items()}
 
     def close(self):
@@ -103,7 +94,6 @@ class ApiServerOutput():
 
 class ApiServer():
     """ A delegate to the delegate (HTTPRequestHander) as is easy to test """
-
     job_request_pattern = re.compile("/job/([\w\.\-/_]*)/lastBuild/api/json.*")
 
     result_to_color = {Health.SICK  : "red",
@@ -116,12 +106,9 @@ class ApiServer():
 
     def handle_get(self, path):
         try:
-            if(path == "/config"):
-                return self.handle_config()
-            if(path == "/jobs"):
-                status = get_shared_status()
-                return self.list_all_jobs(status=status)
             status = get_shared_status()
+            if(path == "/jobs"):
+                return self.list_all_jobs(status=status)
             logger.info("handle_get: %s", path)
             if "all" in status and status["all"].request_status == RequestStatus.ERROR:
                return (500, "Error requesting any job")
@@ -165,16 +152,6 @@ class ApiServer():
         else:
             return (404, 'Unkonwn build job "%s"' % job)
 
-    def handle_view(self, view, status):
-        if view in views:
-            filteredView = {k: v for k, v in status.items() if views[view].match(k)}
-            return (200, self.__to_jenkins_view_result__(filteredView))
-        else:
-            return (404, 'Unknown view "%s"' % view)
-
-    def handle_config(self):
-        return (200, get_shared_config())
-
     def __to_jenkins_job_result__(self, job_status):
         jenkins_response = {
             "result" : self.health_to_jenkins_status[job_status.health] if job_status.health in self.health_to_jenkins_status else None,
@@ -197,24 +174,6 @@ class ApiServer():
         if job_status.cause:
             jenkins_response["actions"] = [{"causes": [{"shortDescription": job_status.cause}]}]
         return jenkins_response
-
-    def __to_jenkins_view_result__(self, jobs_status):
-        jenkins_view = {
-            "description": None,
-            "jobs" : []
-        }
-        for job in jobs_status:
-            jenkins_view["jobs"].append({"name" : job, "color" : self.__to_color__(jobs_status[job])})
-        return jenkins_view
-
-    def __to_color__(self, job_status):
-        if job_status.health in self.result_to_color:
-            color=self.result_to_color[job_status.health]
-            if job_status.active:
-                color += "_anime"
-            return color
-        else:
-            return "disabled"
 
 class ApiServerRequestHandler(BaseHTTPRequestHandler):
     """ A shallow adapter to the Python http request handler as it is hard to test"""
