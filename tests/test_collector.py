@@ -1,12 +1,11 @@
 __author__ = 'florianseidl'
 
 from collector import *
-from urllib.request import HTTPError
+from urllib.error import HTTPError
 from unittest import TestCase
 from unittest.mock import Mock, DEFAULT
 from types import SimpleNamespace
 from concurrent import futures
-
 
 class TestHttpClient(TestCase):
     json_str = '{ "foo": "bar" }'
