@@ -1,0 +1,57 @@
+{
+"_class": "jenkins.branch.OrganizationFolder",
+"actions": [
+{},
+{},
+{},
+{},
+{
+"_class": "jenkins.scm.api.metadata.ObjectMetadataAction"
+},
+{
+"_class": "com.cloudbees.jenkins.plugins.bitbucket.BitbucketTeamMetadataAction"
+},
+{},
+{},
+{},
+{},
+{},
+{
+"_class": "com.cloudbees.plugins.credentials.ViewCredentialsAction"
+}
+],
+"description": "<b>Jenkinsfile Template</b> -> für PT_CISI: <a href=\"https://code.sbb.ch/projects/PT_CISI/repos/config/raw/Jenkinsfile?at=refs%2Fheads%2Fmaster\">repo: config</a><br/>\n<b>Pipeline Definition: </b> <a href=\"https://code.sbb.ch/projects/PT_CISI/repos/config/browse/vars/libmain.groovy\">libmain.groovy</a><br/>\n<b>Doku zu Jenkinsfiles im Confluence </b> <a href=\"https://confluence.sbb.ch/x/DDsONw\">hier</a><br/>\n\n<br/>\n<b>Releases: </b> 'Build with Parameters' auf dem Job der jeweiligen <b>develop</b>, <b>maintenance/xy</b> oder <b>master</b> Builds klicken<br/><br/>",
+"displayName": "cisi",
+"displayNameOrNull": null,
+"fullDisplayName": "cisi",
+"fullName": "pt.cisi.orga",
+"name": "pt.cisi.orga",
+"url": "https://ci.sbb.ch/job/pt.cisi.orga/",
+"healthReport": [
+{
+"description": "Worst health: cisi » angebot: Worst health: cisi » angebot » PR-587: Build-Stabilität: In letzter Zeit schlugen alle Builds fehl.",
+"iconClassName": "icon-health-00to19",
+"iconUrl": "health-00to19.png",
+"score": 0
+}
+],
+"jobs": [
+{
+"_class": "org.jenkinsci.plugins.workflow.multibranch.WorkflowMultiBranchProject",
+"name": "angebot",
+"url": "https://ci.sbb.ch/job/pt.cisi.orga/job/angebot/"
+}
+],
+"primaryView": {
+"_class": "jenkins.branch.OrganizationFolderViewHolder$ViewImpl",
+"name": "default",
+"url": "https://ci.sbb.ch/job/pt.cisi.orga/"
+},
+"views": [
+{
+"_class": "jenkins.branch.OrganizationFolderViewHolder$ViewImpl",
+"name": "default",
+"url": "https://ci.sbb.ch/job/pt.cisi.orga/"
+}
+]
+}
