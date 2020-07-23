@@ -141,10 +141,10 @@ class ApiServer():
             logging.debug("handle_job: match for job=%s" % job)
         elif jobWithSlash in status:
             job_status=status[jobWithSlash]
-            logging.debug("handle_job: match for job=%" %jobWithSlash)
+            logging.debug("handle_job: match for job=%s" % jobWithSlash)
         else:
             job_status = None
-            logging.warning("handle_job: no match for job=%" % job)
+            logging.warning("handle_job: no match for job=%s" % job)
         
         if job_status and job_status.request_status == RequestStatus.OK:
             return (200, self.__to_jenkins_job_result__(job_status))
