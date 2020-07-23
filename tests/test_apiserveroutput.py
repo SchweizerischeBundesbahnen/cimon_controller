@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from unittest import TestCase
 
 import apiserveroutput
-from apiserveroutput import *
+#from apiserveroutput import *
 
 class TestApiServerOutput(TestCase):
     job_name_success = "mvp.mct.vermittler-produkt.continuous"
