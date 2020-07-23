@@ -2,6 +2,11 @@
 # Python 3.4
 from webbrowser import get
 
+#
+# supplies a list of available job-names under http://localhost:8080/jobs
+# supplies data for a job under http://localhost:8080/job/<job-name>/lastBuild/api/json
+#
+
 __author__ = 'florianseidl'
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -14,9 +19,6 @@ from time import sleep
 from datetime import datetime
 from output import NameFilter
 from cimon import JobStatus,RequestStatus,Health
-
-# Template for an output. For ampel type output with 3 or less lights or signals, use myampeloutput template instead.
-# copy and add your functionality
 
 logger = logging.getLogger(__name__)
 
@@ -128,10 +130,7 @@ class ApiServer():
         return (200, self.__to_jenkins_job_list__(status.keys()))
 
     def __to_jenkins_job_list__(selfself, keys):
-        jenkins_response = {
-            "jobs": [key for key in keys]
-        }
-        logging.info("job list", jenkins_response)
+        jenkins_response = [key for key in keys]
         return jenkins_response
     
     def handle_job(self, job, status):
@@ -139,10 +138,14 @@ class ApiServer():
         # config can contain job name with or without terminating slash; regexp always delivers job name without terminating slash
         if job in status:
             job_status=status[job]
+            logging.debug("handle_job: match for job=%s" % job)
         elif jobWithSlash in status:
             job_status=status[jobWithSlash]
+            logging.debug("handle_job: match for job=%s" % jobWithSlash)
         else:
             job_status = None
+            logging.warning("handle_job: no match for job=%s" % job)
+        
         if job_status and job_status.request_status == RequestStatus.OK:
             return (200, self.__to_jenkins_job_result__(job_status))
         elif job_status and job_status.request_status == RequestStatus.ERROR:
