@@ -144,7 +144,6 @@ class ApiServer():
 
     def __to_jenkins_job_list__(selfself, keys):
         jenkins_response = [key for key in keys]
-        #logging.info("job list", jenkins_response)
         return jenkins_response
     
     def handle_job(self, job, status):
