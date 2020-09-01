@@ -50,8 +50,11 @@ def create(configuration, key=None):
                             base_url=configuration["url"],
                             job_names=configuration.get("jobs", ()),
                             view_names=configuration.get("views", ()),
-                            folder_names=configuration.get("folders", ()),
-                            multibranch_pipeline_names=configuration.get("multibranch_pipelines", ()),
+                            folder_names=configuration.get("folders", []) +
+                                         configuration.get("orgFolders", []),
+                            multibranch_pipeline_names=configuration.get("multibranch_pipelines", []) +
+                                                       configuration.get("multibranchPipelines", []) +
+                                                       configuration.get("plainFolders", []),
                             max_parallel_requests=configuration.get("maxParallelRequest",
                                                                     default_max_parallel_requests),
                             name=configuration.get('name', None),
